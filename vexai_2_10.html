@@ -1,0 +1,2067 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Vex.AI — Know What's Real</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;1,9..40,400&family=Space+Grotesk:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+:root{--ink:#0c0c0e;--paper:#f5f4f0;--cream:#faf9f5;--accent:#ff4d1c;--accent2:#1a1aff;--muted:#888882;--border:#e2e1da;--card:#ffffff;--green:#00c46a;--yellow:#ffb800}
+*{margin:0;padding:0;box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{font-family:'DM Sans',sans-serif;background:var(--cream);color:var(--ink);overflow-x:hidden}
+nav{position:fixed;top:0;width:100%;z-index:1000;display:flex;align-items:center;justify-content:space-between;padding:0 48px;height:60px;background:rgba(245,244,240,0.95);backdrop-filter:blur(24px);border-bottom:1px solid var(--border);transition:box-shadow .3s}
+nav.scrolled{box-shadow:0 4px 30px rgba(0,0,0,.08)}
+.logo{font-family:'Syne',sans-serif;font-size:22px;font-weight:800;letter-spacing:-0.5px;display:flex;align-items:center;gap:2px;cursor:pointer}
+.logo-dot{color:var(--accent)}
+.nav-links{display:flex;gap:2px}
+.nav-links a{font-size:14px;color:var(--muted);text-decoration:none;padding:6px 14px;border-radius:8px;cursor:pointer;transition:all .2s;font-weight:500}
+.nav-links a:hover,.nav-links a.act{background:var(--ink);color:var(--paper)}
+.nav-right{display:flex;align-items:center;gap:8px}
+.lang{position:relative;display:flex;align-items:center}
+.lang-btn{display:flex;align-items:center;gap:6px;background:transparent;border:1px solid var(--border);color:var(--ink);font-size:13px;font-weight:600;padding:6px 12px 6px 10px;border-radius:9px;cursor:pointer;font-family:'DM Sans',sans-serif;transition:all .2s;white-space:nowrap}
+.lang-btn:hover{border-color:var(--ink)}
+.lang-btn .flag{font-size:16px;line-height:1}
+.lang-btn .chevron{width:12px;height:12px;transition:transform .2s;color:var(--muted)}
+.lang-dropdown{display:none;position:absolute;top:calc(100% + 8px);right:0;background:var(--card);border:1px solid var(--border);border-radius:14px;box-shadow:0 12px 40px rgba(0,0,0,.12);min-width:160px;padding:6px;z-index:2000;animation:scaleup .15s ease}
+.lang-dropdown.open{display:block}
+.lang-option{display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:9px;cursor:pointer;font-size:14px;font-weight:500;color:var(--ink);transition:background .15s;white-space:nowrap}
+.lang-option:hover{background:var(--paper)}
+.lang-option.act{background:var(--ink);color:var(--paper)}
+.lang-option .flag{font-size:18px;line-height:1}
+.lang-option .code{font-size:11px;font-weight:700;color:inherit;opacity:.5;margin-left:auto}
+#nav-auth-area{display:flex;align-items:center;gap:8px}
+.btn-signin{font-size:14px;color:var(--ink);cursor:pointer;background:none;border:1px solid var(--border);font-family:inherit;padding:7px 16px;border-radius:9px;font-weight:500;transition:all .2s}
+.btn-signin:hover{border-color:var(--ink)}
+.btn-try{background:var(--accent);color:#fff;border:none;padding:8px 20px;border-radius:9px;font-size:14px;cursor:pointer;font-family:inherit;font-weight:600;transition:opacity .2s}
+.btn-try:hover{opacity:.85}
+.page{display:none}.page.act{display:block}
+@keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-14px)}}
+@keyframes spin{to{transform:rotate(360deg)}}
+@keyframes fadeup{from{opacity:0;transform:translateY(28px)}to{opacity:1;transform:translateY(0)}}
+@keyframes pulse{0%,100%{transform:scale(1)}50%{transform:scale(1.06)}}
+@keyframes ticker{0%{transform:translateX(0)}100%{transform:translateX(-50%)}}
+@keyframes scaleup{from{opacity:0;transform:scale(.94)}to{opacity:1;transform:scale(1)}}
+@keyframes glow{0%,100%{opacity:.6}50%{opacity:1}}
+.reveal{opacity:0;transform:translateY(32px);transition:opacity .7s cubic-bezier(.22,1,.36,1),transform .7s cubic-bezier(.22,1,.36,1)}
+.reveal.visible{opacity:1;transform:translateY(0)}
+.hero{min-height:100vh;padding:120px 80px 80px;position:relative;overflow:hidden;display:flex;flex-direction:column;align-items:center;justify-content:center;background:var(--cream)}
+.hero-bg-grid{position:absolute;inset:0;background-image:linear-gradient(to right,rgba(0,0,0,.04) 1px,transparent 1px),linear-gradient(to bottom,rgba(0,0,0,.04) 1px,transparent 1px);background-size:40px 40px;pointer-events:none}
+.hero-blob{position:absolute;border-radius:50%;filter:blur(80px);pointer-events:none}
+.badge{display:inline-flex;align-items:center;gap:8px;background:var(--ink);color:var(--paper);border-radius:100px;padding:6px 16px;font-size:11px;font-weight:600;letter-spacing:1px;text-transform:uppercase;margin-bottom:32px;animation:fadeup .6s ease both}
+.badge-dot{width:6px;height:6px;border-radius:50%;background:var(--accent);animation:pulse 2s infinite;flex-shrink:0}
+.hero h1{font-family:'Syne',sans-serif;font-size:76px;font-weight:800;line-height:1.0;letter-spacing:-3px;text-align:center;max-width:900px;margin-left:auto;margin-right:auto;animation:fadeup .7s ease .1s both;position:relative}
+.hero h1 em{font-style:normal;color:var(--accent)}
+.hero-sub{font-size:17px;color:var(--muted);margin:24px auto 48px;text-align:center;max-width:480px;line-height:1.7;animation:fadeup .7s ease .2s both}
+.input-box{background:var(--card);border-radius:20px;box-shadow:0 2px 0 var(--border),0 20px 60px rgba(0,0,0,.08);max-width:720px;width:100%;overflow:hidden;animation:fadeup .7s ease .3s both;border:1px solid var(--border);position:relative;margin-left:auto;margin-right:auto}
+.input-box textarea{width:100%;height:180px;border:none;outline:none;padding:28px;font-size:16px;color:var(--ink);resize:none;font-family:'DM Sans',sans-serif;line-height:1.7;background:transparent}
+.input-box textarea::placeholder{color:#bbb}
+.input-toolbar{display:flex;justify-content:space-between;align-items:center;padding:14px 20px;border-top:1px solid var(--border);background:var(--paper)}
+.input-actions{display:flex;gap:8px}
+.input-btn{font-size:13px;color:var(--muted);background:var(--card);border:1px solid var(--border);padding:7px 14px;border-radius:8px;cursor:pointer;font-family:inherit;font-weight:500;transition:all .2s}
+.input-btn:hover{border-color:var(--ink);color:var(--ink)}
+.check-btn{background:var(--ink);color:var(--paper);border:none;padding:10px 24px;border-radius:10px;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit;transition:opacity .2s;display:flex;align-items:center;gap:8px}
+.check-btn:hover{opacity:.8}
+.ticker-wrap{overflow:hidden;white-space:nowrap;padding:16px 0;background:var(--ink)}
+.ticker-track{display:inline-flex;animation:ticker 22s linear infinite}
+.ticker-item{font-family:'Syne',sans-serif;font-size:13px;font-weight:700;color:rgba(255,255,255,.4);padding:0 40px;text-transform:uppercase;letter-spacing:2px}
+.ticker-item span{color:var(--accent);margin-right:16px}
+#result{max-width:720px;width:100%;margin:24px auto 0;animation:fadeup .4s ease}
+.result-score-card{background:var(--card);border-radius:20px;border:1px solid var(--border);padding:36px;margin-bottom:16px;box-shadow:0 20px 60px rgba(0,0,0,.06)}
+.score-label{font-size:11px;font-weight:600;color:var(--muted);letter-spacing:1.5px;text-transform:uppercase;margin-bottom:8px}
+#snum{font-family:'Syne',sans-serif;font-size:72px;font-weight:800;line-height:1;letter-spacing:-3px}
+.progress-bar{height:6px;background:var(--paper);border-radius:3px;margin:20px 0;overflow:hidden}
+#bf{height:100%;border-radius:3px;transition:width 1.4s cubic-bezier(.22,1,.36,1);width:0%}
+.tags{display:flex;gap:8px;flex-wrap:wrap;margin-top:20px}
+.tag{font-size:12px;padding:5px 12px;border-radius:100px;font-weight:600}
+.tag.bad{background:#fff1ee;color:var(--accent);border:1px solid #ffd5ca}
+.tag.warn{background:#fffbeb;color:#d97706;border:1px solid #fde68a}
+.tag.good{background:#efffef;color:var(--green);border:1px solid #b5f5c8}
+.humanize-card{background:var(--card);border-radius:20px;border:1px solid var(--border);padding:32px;box-shadow:0 20px 60px rgba(0,0,0,.06)}
+.humanize-btn{width:100%;background:var(--ink);color:var(--paper);border:none;padding:16px;border-radius:12px;font-size:15px;font-weight:600;cursor:pointer;font-family:inherit;transition:opacity .2s}
+.humanize-btn:hover{opacity:.8}
+#outWrap{display:none;margin-top:20px}
+#outWrap p{font-size:15px;line-height:1.8;color:#333;background:var(--paper);padding:20px;border-radius:12px;border:1px solid var(--border)}
+#loading{display:none;text-align:center;padding:40px;max-width:720px;width:100%;margin-top:20px}
+.spinner{width:40px;height:40px;border:3px solid var(--border);border-top-color:var(--ink);border-radius:50%;animation:spin 1s linear infinite;margin:0 auto 16px}
+.section{padding:100px 80px}
+.section-label{font-size:11px;font-weight:700;color:var(--muted);letter-spacing:2px;text-transform:uppercase;margin-bottom:16px}
+.section-title{font-family:'Syne',sans-serif;font-size:52px;font-weight:800;letter-spacing:-2px;line-height:1.05}
+.steps-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:24px;margin-top:60px}
+.step-card{background:var(--card);border-radius:20px;border:1px solid var(--border);padding:36px;transition:transform .4s cubic-bezier(.22,1,.36,1),box-shadow .4s}
+.step-card:hover{transform:translateY(-8px);box-shadow:0 24px 60px rgba(0,0,0,.1)}
+.step-num{font-family:'Syne',sans-serif;font-size:13px;font-weight:800;color:var(--muted);letter-spacing:2px;margin-bottom:20px}
+.step-icon{width:52px;height:52px;margin-bottom:20px;display:block;animation:float 6s ease-in-out infinite}
+.step-card h3{font-family:'Syne',sans-serif;font-size:22px;font-weight:700;margin-bottom:12px;letter-spacing:-.5px}
+.step-card p{font-size:15px;color:var(--muted);line-height:1.7}
+.features-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:20px;margin-top:60px}
+.feat-card{background:var(--card);border-radius:20px;border:1px solid var(--border);padding:40px;transition:transform .4s cubic-bezier(.22,1,.36,1),box-shadow .4s;position:relative;overflow:hidden}
+.feat-card:hover{transform:translateY(-8px);box-shadow:0 20px 60px rgba(0,0,0,.08)}
+.feat-card:nth-child(1)::before{content:'';position:absolute;inset:0;background:linear-gradient(135deg,#fff8f0,#fff3ee);z-index:0}
+.feat-card:nth-child(2)::before{content:'';position:absolute;inset:0;background:linear-gradient(135deg,#f0f4ff,#eef2ff);z-index:0}
+.feat-card:nth-child(3)::before{content:'';position:absolute;inset:0;background:linear-gradient(135deg,#f0fff8,#efffef);z-index:0}
+.feat-card:nth-child(4)::before{content:'';position:absolute;inset:0;background:linear-gradient(135deg,#fdfff0,#fafff0);z-index:0}
+.feat-card>*{position:relative;z-index:1}
+.feat-icon{width:52px;height:52px;margin-bottom:20px;display:block;animation:float 6s ease-in-out infinite}
+.feat-card h3{font-family:'Syne',sans-serif;font-size:22px;font-weight:700;margin-bottom:12px;letter-spacing:-.5px}
+.feat-card p{font-size:15px;color:#555;line-height:1.7}
+.reviews-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:20px;margin-top:60px}
+.review-card{background:var(--card);border-radius:20px;border:1px solid var(--border);padding:32px;transition:transform .4s cubic-bezier(.22,1,.36,1),box-shadow .4s}
+.review-card:hover{transform:translateY(-6px);box-shadow:0 16px 50px rgba(0,0,0,.08)}
+.stars{color:var(--yellow);font-size:16px;margin-bottom:16px;letter-spacing:2px}
+.review-text{font-size:16px;line-height:1.75;margin-bottom:28px;font-style:italic;color:var(--ink)}
+.reviewer{display:flex;align-items:center;gap:12px}
+.reviewer-av{width:40px;height:40px;border-radius:50%;border:2px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:18px}
+.reviewer-name{font-size:14px;font-weight:600}
+.reviewer-loc{font-size:12px;color:var(--muted)}
+/* TOOL PAGES */
+.tool-hero{min-height:60vh;padding:120px 80px 80px;position:relative;overflow:hidden;display:flex;flex-direction:column;align-items:center;justify-content:center;background:var(--cream)}
+.tool-input-box{background:var(--card);border-radius:20px;box-shadow:0 2px 0 var(--border),0 20px 60px rgba(0,0,0,.08);max-width:720px;width:100%;overflow:hidden;border:1px solid var(--border);margin:0 auto;animation:fadeup .7s ease .3s both}
+.tool-input-box textarea{width:100%;height:200px;border:none;outline:none;padding:28px;font-size:16px;color:var(--ink);resize:none;font-family:'DM Sans',sans-serif;line-height:1.7;background:transparent}
+.tool-input-box textarea::placeholder{color:#bbb}
+.tool-toolbar{display:flex;justify-content:flex-end;padding:14px 20px;border-top:1px solid var(--border);background:var(--paper)}
+.tool-result{max-width:720px;width:100%;margin:20px auto 0}
+.tool-result-box{background:var(--card);border-radius:20px;border:1px solid var(--border);padding:32px;box-shadow:0 20px 60px rgba(0,0,0,.06)}
+.tool-chips{display:flex;gap:12px;flex-wrap:wrap;margin-top:48px;justify-content:center;animation:fadeup .7s ease .4s both}
+.tool-chip{background:var(--card);border:1px solid var(--border);border-radius:100px;padding:10px 20px;font-size:13px;font-weight:600;display:flex;align-items:center;gap:8px}
+/* PRICING */
+.pricing-hero{background:linear-gradient(160deg,#f0ede6 0%,#e8e4db 100%);padding:100px 80px 160px;text-align:center;position:relative;overflow:hidden}
+.pricing-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:24px;margin-top:-100px;max-width:1100px;margin-left:auto;margin-right:auto;padding:0 80px 100px}
+.price-card{background:var(--card);border-radius:24px;border:1px solid var(--border);padding:40px;transition:transform .4s cubic-bezier(.22,1,.36,1),box-shadow .4s;position:relative}
+.price-card:hover{transform:translateY(-8px);box-shadow:0 30px 80px rgba(0,0,0,.12)}
+.price-card.featured{background:var(--card);border-color:var(--accent);border-width:2px;transform:scale(1.04);box-shadow:0 30px 80px rgba(255,77,28,.15),0 0 0 2px var(--accent)}
+.price-card.featured:hover{transform:scale(1.04) translateY(-8px)}
+.price-badge{display:inline-block;font-family:'Space Grotesk',sans-serif;font-size:11px;font-weight:700;padding:5px 14px;border-radius:100px;letter-spacing:1.5px;text-transform:uppercase;margin-bottom:28px}
+.price-badge.default{background:var(--paper);color:var(--muted);border:1px solid var(--border)}
+.price-badge.pop{background:var(--accent);color:#fff}
+.price-badge.best{background:linear-gradient(90deg,#ffb800,#ff4d1c);color:#fff}
+.price-card h2{font-family:'Syne',sans-serif;font-size:28px;font-weight:800;margin-bottom:10px;letter-spacing:-1px}
+.price-card.featured h2{color:var(--ink)}
+.price-desc{font-family:'Space Grotesk',sans-serif;font-size:14px;color:var(--muted);margin-bottom:36px;line-height:1.6}
+.price-card.featured .price-desc{color:var(--muted)}
+.price-amount{display:flex;align-items:flex-start;gap:4px;margin-bottom:4px}
+.price-currency{font-family:'Syne',sans-serif;font-size:24px;font-weight:700;margin-top:10px}
+.price-num{font-family:'Inter',system-ui,sans-serif;font-size:72px;font-weight:800;letter-spacing:-3px;line-height:1}
+.price-card.featured .price-currency,.price-card.featured .price-num{color:var(--ink)}
+.price-orig{font-family:'Space Grotesk',sans-serif;font-size:16px;color:var(--muted);text-decoration:line-through;margin-left:8px;margin-top:14px}
+.price-card.featured .price-orig{color:var(--muted)}
+.price-per{font-family:'Space Grotesk',sans-serif;font-size:13px;color:var(--muted);margin-bottom:36px}
+.price-card.featured .price-per{color:var(--muted)}
+.price-divider{height:1px;background:var(--border);margin-bottom:28px}
+.price-card.featured .price-divider{background:var(--border)}
+.price-features{list-style:none;margin-bottom:36px}
+.price-features li{font-family:'Space Grotesk',sans-serif;font-size:14px;color:#555;padding:8px 0;display:flex;align-items:center;gap:10px;border-bottom:1px solid var(--border)}
+.price-features li:last-child{border-bottom:none}
+.price-card.featured .price-features li{color:#555;border-bottom-color:var(--border)}
+.price-features li::before{content:'✓';color:var(--green);font-weight:700;font-size:13px}
+.price-card.featured .price-features li::before{color:var(--green)}
+.price-cta{width:100%;padding:15px;border-radius:13px;font-size:15px;font-family:'Space Grotesk',sans-serif;font-weight:700;cursor:pointer;transition:all .2s}
+.price-cta.outline{background:transparent;color:var(--ink);border:2px solid var(--border)}
+.price-cta.outline:hover{border-color:var(--ink);background:var(--ink);color:#fff}
+.price-cta.filled{background:var(--accent);color:#fff;border:none}
+.price-cta.filled:hover{opacity:.88}
+/* FAQ */
+.faq-item{border-top:1px solid var(--border);padding:24px 0;cursor:pointer}
+.faq-item:last-of-type{border-bottom:1px solid var(--border)}
+.faq-q{font-family:'Space Grotesk',sans-serif;font-size:17px;font-weight:600;display:flex;justify-content:space-between;align-items:center}
+.faq-plus{font-size:24px;color:var(--muted);font-weight:300;transition:transform .3s}
+.faq-a{display:none;font-size:15px;color:var(--muted);margin-top:14px;line-height:1.8}
+/* ACCOUNT */
+.account-grid{display:grid;grid-template-columns:260px 1fr;gap:24px;max-width:1100px;margin:0 auto;padding:100px 48px 80px}
+.account-sidebar{background:var(--card);border:1px solid var(--border);border-radius:20px;padding:28px;height:fit-content;position:sticky;top:80px}
+.account-avatar{width:64px;height:64px;border-radius:50%;background:var(--ink);display:flex;align-items:center;justify-content:center;font-family:'Syne',sans-serif;font-size:22px;font-weight:800;color:var(--paper);margin-bottom:16px}
+.account-email{font-size:14px;color:var(--muted);margin-bottom:8px;word-break:break-all}
+.plan-badge{display:inline-block;background:var(--paper);border:1px solid var(--border);font-size:12px;font-weight:700;padding:4px 12px;border-radius:100px;letter-spacing:.5px;text-transform:uppercase;margin-bottom:24px}
+.plan-badge.premium{background:var(--accent);color:#fff;border-color:var(--accent)}
+.words-box{background:var(--paper);border-radius:12px;padding:16px;margin-bottom:20px}
+.words-num{font-family:'Syne',sans-serif;font-size:32px;font-weight:800;letter-spacing:-1px}
+.words-label{font-size:12px;color:var(--muted);margin-top:4px}
+.logout-btn{width:100%;padding:11px;background:transparent;color:var(--muted);border:1px solid var(--border);border-radius:10px;font-size:14px;font-weight:500;cursor:pointer;font-family:inherit;transition:all .2s}
+.logout-btn:hover{border-color:var(--accent);color:var(--accent)}
+/* Account sidebar nav */
+.acc-nav{margin-bottom:20px}
+.acc-nav-item{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:10px;font-size:14px;font-weight:500;color:var(--muted);cursor:pointer;transition:all .2s;margin-bottom:2px}
+.acc-nav-item:hover{background:var(--paper);color:var(--ink)}
+.acc-nav-item.act{background:var(--ink);color:var(--paper)}
+.acc-nav-item svg{flex-shrink:0;opacity:.7}
+.acc-nav-item.act svg{opacity:1}
+/* Account tabs content */
+.acc-tab{display:none}
+.acc-tab.act{display:block}
+.acc-section-title{font-family:'Syne',sans-serif;font-size:24px;font-weight:800;letter-spacing:-0.5px;margin-bottom:4px}
+.acc-section-sub{font-size:14px;color:var(--muted);margin-bottom:28px}
+.acc-card{background:var(--card);border:1px solid var(--border);border-radius:20px;padding:28px;margin-bottom:16px}
+.acc-card-title{font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:1.5px;color:var(--muted);margin-bottom:20px}
+.acc-field{margin-bottom:18px}
+.acc-field label{display:block;font-size:13px;font-weight:600;color:var(--ink);margin-bottom:6px}
+.acc-field input,.acc-field select{width:100%;padding:11px 14px;border:1.5px solid var(--border);border-radius:10px;font-size:14px;font-family:inherit;outline:none;background:var(--paper);color:var(--ink);transition:border-color .2s}
+.acc-field input:focus,.acc-field select:focus{border-color:var(--ink);background:#fff}
+.acc-field input[readonly]{background:var(--paper);color:var(--muted);cursor:default}
+.acc-save-btn{background:var(--ink);color:var(--paper);border:none;padding:11px 24px;border-radius:10px;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit;transition:opacity .2s}
+.acc-save-btn:hover{opacity:.8}
+.acc-save-btn.danger{background:var(--accent)}
+.acc-toggle-row{display:flex;align-items:center;justify-content:space-between;padding:14px 0;border-bottom:1px solid var(--border)}
+.acc-toggle-row:last-child{border-bottom:none}
+.acc-toggle-label{font-size:14px;font-weight:500;color:var(--ink)}
+.acc-toggle-desc{font-size:12px;color:var(--muted);margin-top:2px}
+.acc-toggle{position:relative;width:44px;height:24px;flex-shrink:0}
+.acc-toggle input{opacity:0;width:0;height:0}
+.acc-toggle-slider{position:absolute;inset:0;background:#ddd;border-radius:12px;cursor:pointer;transition:.3s}
+.acc-toggle-slider::before{content:'';position:absolute;height:18px;width:18px;left:3px;bottom:3px;background:#fff;border-radius:50%;transition:.3s}
+.acc-toggle input:checked+.acc-toggle-slider{background:var(--ink)}
+.acc-toggle input:checked+.acc-toggle-slider::before{transform:translateX(20px)}
+.acc-stat-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:20px}
+.acc-stat{background:var(--paper);border-radius:14px;padding:18px 20px}
+.acc-stat-num{font-family:'Syne',sans-serif;font-size:28px;font-weight:800;letter-spacing:-1px;margin-bottom:2px}
+.acc-stat-label{font-size:12px;color:var(--muted)}
+.acc-plan-card{border:1.5px solid var(--border);border-radius:16px;padding:20px 24px;margin-bottom:12px;display:flex;align-items:center;justify-content:space-between;cursor:pointer;transition:all .2s}
+.acc-plan-card:hover{border-color:var(--ink)}
+.acc-plan-card.active{border-color:var(--accent);background:#fff8f6}
+.acc-plan-name{font-family:'Syne',sans-serif;font-size:16px;font-weight:700}
+.acc-plan-price{font-size:13px;color:var(--muted);margin-top:3px}
+.acc-plan-badge{font-size:11px;font-weight:700;padding:4px 10px;border-radius:100px;background:var(--accent);color:#fff}
+/* History */
+.history-title{font-family:'Syne',sans-serif;font-size:24px;font-weight:800;letter-spacing:-0.5px;margin-bottom:4px}
+.history-empty{text-align:center;padding:60px;color:var(--muted);font-size:15px;background:var(--card);border:1px solid var(--border);border-radius:20px}
+.history-item{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:20px 24px;margin-bottom:12px;transition:box-shadow .2s}
+.history-item:hover{box-shadow:0 8px 30px rgba(0,0,0,.07)}
+.history-meta{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px}
+.history-action{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:1px;padding:3px 10px;border-radius:100px}
+.history-action.detect{background:#fff1ee;color:var(--accent)}
+.history-action.humanize{background:#efffef;color:var(--green)}
+.history-date{font-size:12px;color:var(--muted)}
+.history-preview{font-size:14px;color:#555;line-height:1.6;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.acc-danger-zone{border:1.5px solid #ffd5ca;border-radius:16px;padding:24px;background:#fff8f6}
+.acc-danger-title{font-size:14px;font-weight:700;color:var(--accent);margin-bottom:8px}
+.acc-danger-desc{font-size:13px;color:var(--muted);margin-bottom:16px;line-height:1.6}
+/* MODAL */
+#modal{display:none;position:fixed;inset:0;background:rgba(12,12,14,.7);z-index:9999;align-items:center;justify-content:center;backdrop-filter:blur(12px)}
+#modal.open{display:flex}
+.modal-box{background:var(--card);border-radius:24px;padding:48px;width:100%;max-width:420px;position:relative;animation:scaleup .3s ease;box-shadow:0 50px 100px rgba(0,0,0,.25);border:1px solid var(--border)}
+.modal-close{position:absolute;top:20px;right:24px;font-size:22px;cursor:pointer;color:var(--muted);background:none;border:none;transition:color .2s}
+.modal-close:hover{color:var(--ink)}
+.modal-title{font-family:'Syne',sans-serif;font-size:28px;font-weight:800;letter-spacing:-1px;margin-bottom:6px}
+.modal-sub{font-size:14px;color:var(--muted);margin-bottom:28px}
+.modal-err{min-height:18px;margin-bottom:10px;font-size:13px}
+.modal-input{width:100%;padding:13px 16px;border:1.5px solid var(--border);border-radius:11px;font-size:15px;margin-bottom:12px;font-family:inherit;outline:none;transition:border-color .2s;background:var(--paper);color:var(--ink)}
+.modal-input:focus{border-color:var(--ink);background:#fff}
+.modal-btn{width:100%;padding:14px;background:var(--ink);color:var(--paper);border:none;border-radius:12px;font-size:15px;font-weight:600;cursor:pointer;font-family:inherit;margin-bottom:16px;transition:opacity .2s}
+.modal-btn:hover{opacity:.85}
+.modal-divider{text-align:center;font-size:13px;color:var(--muted);margin-bottom:16px;position:relative}
+.modal-divider::before,.modal-divider::after{content:'';position:absolute;top:50%;width:38%;height:1px;background:var(--border)}
+.modal-divider::before{left:0}.modal-divider::after{right:0}
+.google-btn{width:100%;padding:13px;background:#fff;color:var(--ink);border:1.5px solid var(--border);border-radius:12px;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit;transition:all .2s;display:flex;align-items:center;justify-content:center;gap:10px;margin-bottom:20px}
+.google-btn:hover{border-color:var(--ink);box-shadow:0 4px 16px rgba(0,0,0,.08)}
+.google-btn svg{width:18px;height:18px}
+.modal-switch{text-align:center;font-size:14px;color:var(--muted)}
+.modal-switch a{color:var(--ink);font-weight:600;cursor:pointer;text-decoration:underline}
+footer{padding:60px 80px 32px;border-top:1px solid var(--border)}
+.footer-top{display:grid;grid-template-columns:2fr 1fr 1fr 1fr;gap:48px;margin-bottom:48px}
+.footer-logo{font-family:'Syne',sans-serif;font-size:22px;font-weight:800;letter-spacing:-.5px;margin-bottom:14px}
+.footer-desc{font-size:14px;color:var(--muted);line-height:1.7;max-width:260px}
+.footer-col h4{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:1.5px;color:var(--muted);margin-bottom:18px}
+.footer-col a{display:block;font-size:14px;color:#555;text-decoration:none;margin-bottom:10px;cursor:pointer;transition:color .2s}
+.footer-col a:hover{color:var(--ink)}
+.footer-bottom{display:flex;justify-content:space-between;font-size:12px;color:var(--muted);padding-top:24px;border-top:1px solid var(--border)}
+.rainbow-line{height:3px;background:linear-gradient(90deg,#ff4d1c,#ff8c00,#ffb800,#00c46a,#1a1aff,#a855f7,#ff4d1c)}
+.cursor-glow{width:350px;height:350px;border-radius:50%;background:radial-gradient(circle,rgba(255,77,28,.07),transparent 70%);position:fixed;pointer-events:none;transform:translate(-50%,-50%);z-index:0;transition:left .15s ease,top .15s ease}
+
+/* ============================================================
+   BURGER MENU
+   ============================================================ */
+.burger{display:none;flex-direction:column;justify-content:center;gap:5px;width:36px;height:36px;cursor:pointer;background:none;border:1px solid var(--border);border-radius:8px;padding:8px;flex-shrink:0}
+.burger span{display:block;height:1.5px;background:var(--ink);border-radius:2px;transition:all .3s}
+.burger.open span:nth-child(1){transform:translateY(6.5px) rotate(45deg)}
+.burger.open span:nth-child(2){opacity:0;transform:scaleX(0)}
+.burger.open span:nth-child(3){transform:translateY(-6.5px) rotate(-45deg)}
+
+.mobile-menu{display:none;position:fixed;top:60px;left:0;right:0;background:rgba(245,244,240,0.98);backdrop-filter:blur(24px);border-bottom:1px solid var(--border);z-index:999;padding:16px 20px 20px;flex-direction:column;gap:4px;animation:fadeup .2s ease}
+.mobile-menu.open{display:flex}
+.mobile-menu a{font-size:15px;color:var(--ink);text-decoration:none;padding:11px 14px;border-radius:10px;cursor:pointer;font-weight:500;transition:background .15s}
+.mobile-menu a:hover,.mobile-menu a.act{background:var(--ink);color:var(--paper)}
+.mobile-lang-option{display:flex;align-items:center;gap:10px;padding:10px 14px;border-radius:10px;cursor:pointer;font-size:15px;font-weight:500;color:var(--ink);transition:background .15s}
+.mobile-lang-option:hover{background:rgba(0,0,0,.05)}
+.mobile-lang-option.act{background:var(--ink);color:var(--paper)}
+
+/* ============================================================
+   BURGER MENU
+   ============================================================ */
+.burger{display:none;flex-direction:column;justify-content:center;gap:5px;width:38px;height:38px;cursor:pointer;background:none;border:1px solid var(--border);border-radius:9px;padding:9px;flex-shrink:0}
+.burger span{display:block;height:1.5px;background:var(--ink);border-radius:2px;transition:all .3s}
+.burger.open span:nth-child(1){transform:translateY(6.5px) rotate(45deg)}
+.burger.open span:nth-child(2){opacity:0;transform:scaleX(0)}
+.burger.open span:nth-child(3){transform:translateY(-6.5px) rotate(-45deg)}
+
+.mobile-menu{display:none;position:fixed;top:60px;left:0;right:0;background:rgba(245,244,240,0.99);backdrop-filter:blur(24px);border-bottom:1px solid var(--border);z-index:999;padding:12px 16px 20px;flex-direction:column;gap:2px;animation:fadeup .2s ease;max-height:calc(100vh - 60px);overflow-y:auto}
+.mobile-menu.open{display:flex}
+.mobile-menu a{font-size:15px;color:var(--ink);text-decoration:none;padding:12px 14px;border-radius:10px;cursor:pointer;font-weight:500;transition:background .15s}
+.mobile-menu a:hover,.mobile-menu a.act{background:var(--ink);color:var(--paper)}
+
+/* ============================================================
+   MOBILE — до 768px
+   ============================================================ */
+@media (max-width: 768px) {
+
+  /* --- NAV --- */
+  nav{padding:0 16px;height:56px}
+  .nav-links{display:none}
+  .lang{display:none}
+  .burger{display:flex}
+  .btn-signin{display:none}
+  .btn-try{padding:8px 14px;font-size:13px}
+  .mobile-menu{top:56px;max-height:calc(100vh - 56px)}
+
+  /* --- HERO --- */
+  .hero{padding:80px 16px 48px;min-height:auto;text-align:center}
+  .hero h1{font-size:36px;letter-spacing:-1.5px;line-height:1.05}
+  .hero-sub{font-size:15px;margin:16px auto 28px;max-width:100%}
+  .badge{font-size:10px;padding:5px 12px}
+
+  /* --- INPUT BOX --- */
+  .input-box{border-radius:16px;margin:0}
+  .input-box textarea{padding:16px;font-size:15px;height:140px}
+  .input-toolbar{flex-wrap:wrap;gap:8px;padding:10px 12px}
+  .input-actions{flex-wrap:wrap;gap:6px;width:100%}
+  .input-btn{font-size:12px;padding:8px 12px;flex:1;text-align:center}
+  .check-btn{width:100%;justify-content:center;padding:12px;margin-top:0}
+
+  /* --- RESULT --- */
+  #result{margin:14px 0 0;padding:0}
+  .result-score-card{padding:20px;border-radius:16px}
+  #snum{font-size:48px}
+  .humanize-card{padding:20px;border-radius:16px}
+
+  /* --- TICKER --- */
+  .ticker-wrap{padding:12px 0}
+
+  /* --- SECTIONS --- */
+  .section{padding:48px 16px}
+  .section-title{font-size:30px;letter-spacing:-1px}
+  .section-label{font-size:10px}
+  .steps-grid{grid-template-columns:1fr;gap:14px;margin-top:28px}
+  .step-card{padding:24px}
+  .features-grid{grid-template-columns:1fr;gap:14px;margin-top:28px}
+  .feat-card{padding:28px}
+  .reviews-grid{grid-template-columns:1fr;gap:14px;margin-top:28px}
+  .review-card{padding:24px}
+
+  /* --- TOOL PAGES --- */
+  .tool-hero{padding:80px 16px 48px;min-height:auto}
+  .tool-hero h1{font-size:34px !important;letter-spacing:-1.5px !important}
+  .tool-input-box{border-radius:16px;margin:0}
+  .tool-input-box textarea{padding:16px;font-size:15px;height:150px}
+  .tool-toolbar{padding:10px 12px}
+  .tool-result{margin:14px 0 0}
+  .tool-result-box{padding:20px;border-radius:16px}
+  .tool-chips{gap:8px;margin-top:24px;justify-content:flex-start;padding:0 2px}
+  .tool-chip{padding:8px 12px;font-size:12px}
+
+  /* stats strip */
+  #human > div:nth-child(2),
+  #checker > div:nth-child(2){padding:32px 16px !important;grid-template-columns:1fr !important}
+  #human > div:nth-child(2) > div,
+  #checker > div:nth-child(2) > div{border-right:none !important;border-bottom:1px solid rgba(255,255,255,.08);padding:14px !important}
+  #human > div:nth-child(2) > div:last-child,
+  #checker > div:nth-child(2) > div:last-child{border-bottom:none}
+
+  /* --- PRICING --- */
+  .pricing-hero{padding:72px 16px 120px}
+  .pricing-hero h1{font-size:38px !important;letter-spacing:-2px !important}
+  .pricing-grid{grid-template-columns:1fr;padding:0 16px 48px;gap:14px;margin-top:-80px}
+  .price-card{padding:28px}
+  .price-card.featured{transform:none;box-shadow:0 16px 50px rgba(255,77,28,.12),0 0 0 2px var(--accent)}
+  .price-card.featured:hover{transform:translateY(-4px)}
+  .price-num{font-size:56px}
+
+  /* --- FAQ --- */
+  #faq{padding:48px 16px !important}
+  .faq-q{font-size:15px}
+
+  /* --- ACCOUNT --- */
+  .account-grid{grid-template-columns:1fr;padding:72px 16px 48px;gap:14px}
+  .account-sidebar{position:static}
+  .acc-stat-grid{grid-template-columns:repeat(3,1fr);gap:8px}
+  .acc-stat{padding:14px}
+  .acc-stat-num{font-size:22px}
+  .acc-section-title{font-size:20px}
+  .acc-card{padding:20px}
+  .acc-nav-item span{font-size:13px}
+
+  /* --- MODAL --- */
+  .modal-box{padding:28px 20px;border-radius:20px;margin:12px}
+  .modal-title{font-size:22px}
+  .modal-input{font-size:14px;padding:11px 14px}
+
+  /* --- FOOTER --- */
+  footer{padding:40px 16px 24px}
+  .footer-top{grid-template-columns:1fr 1fr;gap:24px}
+  .footer-top > div:first-child{grid-column:1/-1}
+  .footer-bottom{flex-direction:column;gap:8px;text-align:center}
+
+  /* --- LANG DROPDOWN --- */
+  .lang-dropdown{right:auto;left:0}
+
+  /* cursor glow off on mobile */
+  .cursor-glow{display:none}
+}
+
+@media (max-width: 400px) {
+  .hero h1{font-size:30px}
+  .tool-hero h1{font-size:30px !important}
+  .section-title{font-size:26px}
+  .pricing-hero h1{font-size:32px !important}
+  .footer-top{grid-template-columns:1fr}
+  .acc-stat-grid{grid-template-columns:1fr}
+}
+/* ============================================================
+   ONBOARDING TOUR
+   ============================================================ */
+@keyframes ob-in{from{opacity:0;transform:translateY(32px) scale(.96)}to{opacity:1;transform:translateY(0) scale(1)}}
+@keyframes ob-out{from{opacity:1;transform:translateY(0) scale(1)}to{opacity:0;transform:translateY(-20px) scale(.96)}}
+@keyframes ob-progress{from{width:0}to{width:100%}}
+@keyframes ob-float{0%,100%{transform:translateY(0)}50%{transform:translateY(-6px)}}
+@keyframes ob-pulse-ring{0%{transform:scale(1);opacity:.6}100%{transform:scale(1.5);opacity:0}}
+
+#onboarding{display:none;position:fixed;inset:0;z-index:99999;align-items:center;justify-content:center}
+#onboarding.open{display:flex}
+.ob-backdrop{position:absolute;inset:0;background:rgba(12,12,14,.75);backdrop-filter:blur(16px)}
+.ob-card{position:relative;z-index:1;background:var(--card);border-radius:28px;padding:0;width:100%;max-width:480px;overflow:hidden;box-shadow:0 40px 100px rgba(0,0,0,.3);border:1px solid var(--border)}
+.ob-card.animating-in{animation:ob-in .45s cubic-bezier(.22,1,.36,1) both}
+.ob-card.animating-out{animation:ob-out .3s cubic-bezier(.55,0,1,.45) both}
+
+/* Progress bar top */
+.ob-progress-track{height:3px;background:var(--border);position:relative;overflow:hidden}
+.ob-progress-fill{height:100%;background:linear-gradient(90deg,var(--accent),#ff8c00);border-radius:0;transition:width .5s cubic-bezier(.22,1,.36,1)}
+
+/* Step visual area */
+.ob-visual{height:220px;display:flex;align-items:center;justify-content:center;position:relative;overflow:hidden}
+.ob-visual-bg{position:absolute;inset:0;opacity:.06}
+.ob-icon-wrap{position:relative;display:flex;align-items:center;justify-content:center;animation:ob-float 3s ease-in-out infinite}
+.ob-icon-wrap::before{content:'';position:absolute;width:80px;height:80px;border-radius:50%;background:var(--ob-color,var(--accent));animation:ob-pulse-ring 2s ease-out infinite;opacity:.4}
+.ob-icon-wrap::after{content:'';position:absolute;width:80px;height:80px;border-radius:50%;background:var(--ob-color,var(--accent));animation:ob-pulse-ring 2s ease-out infinite .6s;opacity:.25}
+.ob-icon-circle{width:80px;height:80px;border-radius:50%;background:var(--ob-color,var(--accent));display:flex;align-items:center;justify-content:center;position:relative;z-index:1;box-shadow:0 12px 40px rgba(0,0,0,.2)}
+.ob-icon-circle svg{width:36px;height:36px;color:#fff}
+
+/* Mini demo UI inside visual */
+.ob-demo{background:var(--paper);border:1px solid var(--border);border-radius:14px;padding:16px;width:240px;box-shadow:0 8px 32px rgba(0,0,0,.08)}
+.ob-demo-line{height:8px;background:#e2e1da;border-radius:4px;margin-bottom:8px}
+.ob-demo-line.w80{width:80%}
+.ob-demo-line.w60{width:60%}
+.ob-demo-line.w90{width:90%}
+.ob-demo-line.accent{background:var(--accent);width:40%}
+.ob-demo-btn{height:32px;background:var(--ink);border-radius:8px;margin-top:12px;display:flex;align-items:center;justify-content:center;gap:6px}
+.ob-demo-btn span{background:rgba(255,255,255,.3);height:8px;border-radius:3px;width:60px}
+
+.ob-score-demo{display:flex;flex-direction:column;align-items:center;gap:12px}
+.ob-score-num{font-family:'Syne',sans-serif;font-size:64px;font-weight:800;letter-spacing:-3px;line-height:1;color:var(--accent)}
+.ob-score-bar-wrap{width:200px;height:6px;background:#e2e1da;border-radius:3px;overflow:hidden}
+.ob-score-bar{height:100%;border-radius:3px;background:var(--accent);width:72%;animation:ob-progress 1.2s ease .3s both}
+.ob-score-tags{display:flex;gap:6px}
+.ob-score-tag{font-size:11px;font-weight:700;padding:3px 10px;border-radius:100px;background:#fff1ee;color:var(--accent);border:1px solid #ffd5ca}
+
+.ob-human-demo{display:flex;align-items:center;gap:12px}
+.ob-human-box{background:var(--paper);border:1px solid var(--border);border-radius:12px;padding:12px;width:96px;font-size:10px;line-height:1.5;color:var(--muted)}
+.ob-human-box.after{background:#efffef;border-color:#b5f5c8;color:#1a7a4a}
+.ob-human-arrow{font-size:18px;color:var(--muted)}
+
+/* Text area */
+.ob-body{padding:28px 32px 24px}
+.ob-step-label{font-size:11px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--muted);margin-bottom:10px}
+.ob-title{font-family:'Syne',sans-serif;font-size:26px;font-weight:800;letter-spacing:-1px;color:var(--ink);margin-bottom:10px;line-height:1.1}
+.ob-title em{font-style:normal;color:var(--accent)}
+.ob-desc{font-size:15px;color:var(--muted);line-height:1.7;margin-bottom:0}
+
+/* Footer */
+.ob-footer{padding:20px 32px 28px;display:flex;align-items:center;justify-content:space-between;border-top:1px solid var(--border)}
+.ob-dots{display:flex;gap:6px}
+.ob-dot{width:6px;height:6px;border-radius:50%;background:var(--border);transition:all .3s}
+.ob-dot.act{width:20px;border-radius:3px;background:var(--ink)}
+.ob-skip{font-size:13px;color:var(--muted);cursor:pointer;background:none;border:none;font-family:inherit;transition:color .2s;padding:0}
+.ob-skip:hover{color:var(--ink)}
+.ob-actions{display:flex;gap:10px;align-items:center}
+.ob-next{background:var(--ink);color:var(--paper);border:none;padding:12px 24px;border-radius:11px;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit;transition:opacity .2s;display:flex;align-items:center;gap:8px}
+.ob-next:hover{opacity:.85}
+.ob-next.finish{background:var(--accent)}
+.ob-next svg{width:14px;height:14px;transition:transform .2s}
+.ob-next:hover svg{transform:translateX(3px)}
+
+@media(max-width:520px){
+  .ob-card{margin:16px;border-radius:22px}
+  .ob-visual{height:180px}
+  .ob-body{padding:20px 22px 16px}
+  .ob-footer{padding:16px 22px 22px}
+  .ob-title{font-size:22px}
+  .ob-demo{width:200px}
+  .ob-score-num{font-size:52px}
+}
+</style>
+</head>
+<body>
+
+<!-- ============================================================
+     ONBOARDING TOUR
+     ============================================================ -->
+<div id="onboarding">
+  <div class="ob-backdrop" onclick="skipOnboarding()"></div>
+  <div class="ob-card animating-in" id="ob-card">
+
+    <!-- Progress bar -->
+    <div class="ob-progress-track">
+      <div class="ob-progress-fill" id="ob-progress" style="width:33%"></div>
+    </div>
+
+    <!-- Visual area (changes per step) -->
+    <div class="ob-visual" id="ob-visual" style="background:linear-gradient(135deg,#fff8f5,#fff3ee)">
+      <!-- Step 1 visual -->
+      <div id="ob-v1" style="display:flex;align-items:center;justify-content:center;width:100%;height:100%;position:relative">
+        <div class="ob-icon-wrap" style="--ob-color:#ff4d1c">
+          <div class="ob-icon-circle" style="background:var(--accent)">
+            <svg viewBox="0 0 36 36" fill="none"><rect x="4" y="6" width="28" height="22" rx="3" stroke="white" stroke-width="2"/><path d="M10 13h16M10 18h12M10 23h8" stroke="white" stroke-width="2" stroke-linecap="round"/></svg>
+          </div>
+        </div>
+        <div class="ob-demo" style="position:absolute;right:20px;bottom:20px;width:140px;opacity:.7;transform:rotate(3deg)">
+          <div class="ob-demo-line w90"></div>
+          <div class="ob-demo-line w80"></div>
+          <div class="ob-demo-line w60"></div>
+          <div class="ob-demo-btn"><span></span></div>
+        </div>
+      </div>
+
+      <!-- Step 2 visual -->
+      <div id="ob-v2" style="display:none;flex-direction:column;align-items:center;justify-content:center;width:100%;height:100%">
+        <div class="ob-score-demo">
+          <div class="ob-score-num">72<span style="font-size:32px;letter-spacing:0">%</span></div>
+          <div class="ob-score-bar-wrap"><div class="ob-score-bar"></div></div>
+          <div class="ob-score-tags">
+            <div class="ob-score-tag">AI words</div>
+            <div class="ob-score-tag">Long sentences</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Step 3 visual -->
+      <div id="ob-v3" style="display:none;align-items:center;justify-content:center;width:100%;height:100%">
+        <div class="ob-human-demo">
+          <div class="ob-human-box">Furthermore, it is important to note that the implementation...</div>
+          <div class="ob-human-arrow">→</div>
+          <div class="ob-human-box after">Also, note that using this really matters...</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Body -->
+    <div class="ob-body">
+      <div class="ob-step-label" id="ob-label">Step 1 of 3</div>
+      <div class="ob-title" id="ob-title">Paste your <em>text</em> to get started</div>
+      <p class="ob-desc" id="ob-desc">Drop in any essay, thesis, or assignment. Vex.AI will instantly scan it for AI-generated patterns — no sign-up needed to try.</p>
+    </div>
+
+    <!-- Footer -->
+    <div class="ob-footer">
+      <div style="display:flex;align-items:center;gap:16px">
+        <button class="ob-skip" onclick="skipOnboarding()">Skip tour</button>
+        <div class="ob-dots">
+          <div class="ob-dot act" id="ob-dot-0"></div>
+          <div class="ob-dot" id="ob-dot-1"></div>
+          <div class="ob-dot" id="ob-dot-2"></div>
+        </div>
+      </div>
+      <button class="ob-next" id="ob-next-btn" onclick="obNext()">
+        Next
+        <svg viewBox="0 0 14 14" fill="none"><path d="M2 7h10M7 2l5 5-5 5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </button>
+    </div>
+
+  </div>
+</div>
+
+<div class="cursor-glow" id="cursorGlow"></div>
+
+<nav id="navbar">
+  <div class="logo" onclick="show('home');closeMobileMenu()">Vex<span class="logo-dot">.</span>AI</div>
+  <div class="nav-links">
+    <a onclick="show('home')" class="act" id="l-home" data-en="Detector" data-ru="Детектор" data-tr="Dedektör" data-es="Detector">Detector</a>
+    <a onclick="show('human')" id="l-human" data-en="Humanizer" data-ru="Гуманизатор" data-tr="İnsanlaştırıcı" data-es="Humanizador">Humanizer</a>
+    <a onclick="show('checker')" id="l-checker" data-en="Plagiarism" data-ru="Плагиат" data-tr="İntihal" data-es="Plagio">Plagiarism</a>
+    <a onclick="show('pricing')" id="l-pricing" data-en="Pricing" data-ru="Цены" data-tr="Fiyatlar" data-es="Precios">Pricing</a>
+    <a onclick="show('faq')" id="l-faq" data-en="FAQ" data-ru="FAQ" data-tr="SSS" data-es="FAQ" data-es="FAQ">FAQ</a>
+  </div>
+  <div class="nav-right">
+    <div class="lang" id="langDropdownWrap">
+      <button class="lang-btn" id="langBtn" onclick="toggleLangDropdown(event)">
+        <span class="flag" id="langFlag">🇬🇧</span>
+        <span id="langCode">EN</span>
+        <svg class="chevron" id="langChevron" viewBox="0 0 12 12" fill="none"><path d="M2 4l4 4 4-4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </button>
+      <div class="lang-dropdown" id="langDropdown">
+        <div class="lang-option act" onclick="selectLang('en','🇬🇧','EN')"><span class="flag">🇬🇧</span> English <span class="code">EN</span></div>
+        <div class="lang-option" onclick="selectLang('ru','🇷🇺','RU')"><span class="flag">🇷🇺</span> Русский <span class="code">RU</span></div>
+        <div class="lang-option" onclick="selectLang('tr','🇹🇷','TR')"><span class="flag">🇹🇷</span> Türkçe <span class="code">TR</span></div>
+        <div class="lang-option" onclick="selectLang('es','🇪🇸','ES')"><span class="flag">🇪🇸</span> Español <span class="code">ES</span></div>
+      </div>
+    </div>
+    <div id="nav-auth-area">
+      <button class="btn-signin" onclick="openModal('login')" data-en="Sign in" data-ru="Войти" data-tr="Giriş" data-es="Iniciar sesión">Sign in</button>
+      <button class="btn-try" onclick="openModal('signup')" data-en="Try free →" data-ru="Попробовать →" data-tr="Ücretsiz →" data-es="Prueba gratis →">Try free →</button>
+    </div>
+    <button class="burger" id="burger" onclick="toggleMobileMenu()" aria-label="Menu">
+      <span></span><span></span><span></span>
+    </button>
+  </div>
+</nav>
+
+<!-- МОБИЛЬНОЕ МЕНЮ -->
+<div class="mobile-menu" id="mobileMenu">
+  <a onclick="show('home');closeMobileMenu()" id="ml-home" data-en="Detector" data-ru="Детектор" data-tr="Dedektör">Detector</a>
+  <a onclick="show('human');closeMobileMenu()" id="ml-human" data-en="Humanizer" data-ru="Гуманизатор" data-tr="İnsanlaştırıcı">Humanizer</a>
+  <a onclick="show('checker');closeMobileMenu()" id="ml-checker" data-en="Plagiarism" data-ru="Плагиат" data-tr="İntihal">Plagiarism</a>
+  <a onclick="show('pricing');closeMobileMenu()" id="ml-pricing" data-en="Pricing" data-ru="Цены" data-tr="Fiyatlar">Pricing</a>
+  <a onclick="show('faq');closeMobileMenu()" id="ml-faq" data-en="FAQ" data-ru="FAQ" data-tr="SSS">FAQ</a>
+  <div style="margin-top:8px;border-top:1px solid var(--border);padding-top:12px">
+    <div style="font-size:11px;font-weight:700;color:var(--muted);letter-spacing:1.5px;text-transform:uppercase;padding:0 8px;margin-bottom:8px">Language</div>
+    <div class="mobile-lang-option act" id="mlo-en" onclick="selectLang('en','🇬🇧','EN');closeMobileMenu()"><span style="font-size:18px">🇬🇧</span> English</div>
+    <div class="mobile-lang-option" id="mlo-ru" onclick="selectLang('ru','🇷🇺','RU');closeMobileMenu()"><span style="font-size:18px">🇷🇺</span> Русский</div>
+    <div class="mobile-lang-option" id="mlo-tr" onclick="selectLang('tr','🇹🇷','TR');closeMobileMenu()"><span style="font-size:18px">🇹🇷</span> Türkçe</div>
+    <div class="mobile-lang-option" id="mlo-es" onclick="selectLang('es','🇪🇸','ES');closeMobileMenu()"><span style="font-size:18px">🇪🇸</span> Español</div>
+  </div>
+</div>
+
+<!-- HOME -->
+<div id="home" class="page act" style="margin-top:60px">
+  <div class="hero">
+    <div class="hero-bg-grid"></div>
+    <div class="hero-blob" style="width:500px;height:500px;background:rgba(255,77,28,.1);top:-100px;left:-150px;animation:float 14s ease-in-out infinite"></div>
+    <div class="hero-blob" style="width:400px;height:400px;background:rgba(26,26,255,.07);bottom:-80px;right:-100px;animation:float 18s ease-in-out infinite reverse"></div>
+    <div class="hero-blob" style="width:200px;height:200px;background:rgba(255,184,0,.08);top:30%;right:15%;animation:float 10s ease-in-out infinite 3s"></div>
+    <div style="position:relative;text-align:center;width:100%">
+      <div class="badge"><div class="badge-dot"></div><span data-en="Live — Trusted by 2M+ students" data-ru="Онлайн — 2M+ студентов" data-tr="Canlı — 2M+ öğrenci" data-es="En vivo — Confiado por 2M+ estudiantes">Live — Trusted by 2M+ students</span></div>
+      <h1 data-en="Know exactly<br>what's <em>AI.</em>" data-ru="Узнай точно<br>что <em>ИИ.</em>" data-tr="Tam olarak bil<br>neyin <em>AI.</em>" data-es="Sabe exactamente<br>qué es <em>IA.</em>">Know exactly<br>what's <em>AI.</em></h1>
+      <p class="hero-sub" data-en="Detect AI-generated text, humanize flagged content, and submit with total confidence — in seconds." data-ru="Определи ИИ-текст, исправь и отправляй с уверенностью — за секунды." data-tr="AI metnini tespit edin, insanlaştırın ve güvenle gönderin — saniyeler içinde." data-es="Detecta texto generado por IA, humaniza el contenido marcado y envía con total confianza — en segundos.">Detect AI-generated text, humanize flagged content, and submit with total confidence — in seconds.</p>
+      <div class="input-box">
+        <textarea id="txt" placeholder="Paste your essay, thesis, or any text here..." data-en-ph="Paste your essay, thesis, or any text here..." data-ru-ph="Вставьте эссе, диссертацию или любой текст..." data-tr-ph="Makale, tez veya herhangi bir metni buraya yapıştırın..." data-es-ph="Pega tu ensayo, tesis o cualquier texto aquí..."></textarea>
+        <div class="input-toolbar">
+          <div class="input-actions">
+            <button class="input-btn" data-en="⬆ Upload" data-ru="⬆ Загрузить" data-tr="⬆ Yükle" data-es="⬆ Subir">⬆ Upload</button>
+            <button class="input-btn" onclick="pasteText()" data-en="Paste" data-ru="Вставить" data-tr="Yapıştır" data-es="Pegar" style="display:flex;align-items:center;gap:6px"><svg width="13" height="13" viewBox="0 0 13 13" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="4" y="1" width="7" height="9" rx="1.5" stroke="currentColor" stroke-width="1.3"/><path d="M2 4H1.5A1.5 1.5 0 0 0 0 5.5v6A1.5 1.5 0 0 0 1.5 13h6A1.5 1.5 0 0 0 9 11.5V11" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/><path d="M6.5 3.5H9M6.5 5.5H9M6.5 7.5H8" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/></svg>Paste</button>
+          </div>
+          <button class="check-btn" onclick="check()">
+            <span data-en="Analyze" data-ru="Анализ" data-tr="Analiz" data-es="Analizar">Analyze</span>
+            <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M2 7h10M7 2l5 5-5 5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </button>
+        </div>
+      </div>
+      <div id="loading"><div class="spinner"></div><p style="color:var(--muted);font-size:14px;font-weight:500" data-en="Analyzing patterns..." data-ru="Анализирую паттерны..." data-tr="Desenler analiz ediliyor..." data-es="Analizando patrones...">Analyzing patterns...</p></div>
+      <div id="result" style="display:none">
+        <div class="result-score-card">
+          <div><div class="score-label" data-en="AI Detection Score" data-ru="Оценка ИИ" data-tr="AI Tespit Puanı" data-es="Puntuación de detección IA">AI Detection Score</div><div id="snum">0%</div></div>
+          <div class="progress-bar"><div id="bf"></div></div>
+          <div class="tags" id="tags"></div>
+        </div>
+        <div class="humanize-card">
+          <button class="humanize-btn" onclick="humanize()" data-en="✦ Humanize this text — remove AI signals" data-ru="✦ Гуманизировать — убрать признаки ИИ" data-tr="✦ İnsanlaştır — AI sinyallerini kaldır" data-es="✦ Humanizar este texto — eliminar señales IA">✦ Humanize this text — remove AI signals</button>
+          <div id="outWrap"><p id="outP"></p><button onclick="copyOut()" style="background:none;border:1px solid var(--border);color:var(--muted);padding:8px 18px;border-radius:9px;font-size:13px;cursor:pointer;margin-top:12px;font-family:inherit;font-weight:500" data-en="Copy text" data-ru="Копировать" data-tr="Kopyala" data-es="Copiar texto">Copy text</button></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="ticker-wrap"><div class="ticker-track">
+    <span class="ticker-item"><span>✦</span>GPTZero compatible</span><span class="ticker-item"><span>✦</span>ChatGPT detection</span><span class="ticker-item"><span>✦</span>Claude detection</span><span class="ticker-item"><span>✦</span>Gemini detection</span><span class="ticker-item"><span>✦</span>Turnitin ready</span><span class="ticker-item"><span>✦</span>98% accuracy</span><span class="ticker-item"><span>✦</span>2M+ texts analyzed</span><span class="ticker-item"><span>✦</span>GPTZero compatible</span><span class="ticker-item"><span>✦</span>ChatGPT detection</span><span class="ticker-item"><span>✦</span>Claude detection</span><span class="ticker-item"><span>✦</span>Gemini detection</span><span class="ticker-item"><span>✦</span>Turnitin ready</span><span class="ticker-item"><span>✦</span>98% accuracy</span><span class="ticker-item"><span>✦</span>2M+ texts analyzed</span>
+  </div></div>
+
+  <div style="background:var(--ink);padding:56px 80px;display:grid;grid-template-columns:repeat(3,1fr);text-align:center">
+    <div class="reveal" style="padding:16px;border-right:1px solid rgba(255,255,255,.08)"><div style="font-family:'Syne',sans-serif;font-size:56px;font-weight:800;color:var(--paper);margin-bottom:6px;letter-spacing:-2px">2M+</div><div style="font-size:12px;color:rgba(255,255,255,.35);letter-spacing:2px;text-transform:uppercase" data-en="Texts analyzed" data-ru="Текстов проверено" data-tr="Metin analiz edildi">Texts analyzed</div></div>
+    <div class="reveal" style="padding:16px;border-right:1px solid rgba(255,255,255,.08);transition-delay:.1s"><div style="font-family:'Syne',sans-serif;font-size:56px;font-weight:800;color:var(--paper);margin-bottom:6px;letter-spacing:-2px">98%</div><div style="font-size:12px;color:rgba(255,255,255,.35);letter-spacing:2px;text-transform:uppercase" data-en="Detection accuracy" data-ru="Точность" data-tr="Tespit doğruluğu">Detection accuracy</div></div>
+    <div class="reveal" style="padding:16px;transition-delay:.2s"><div style="font-family:'Syne',sans-serif;font-size:56px;font-weight:800;color:var(--paper);margin-bottom:6px;letter-spacing:-2px">4.5★</div><div style="font-size:12px;color:rgba(255,255,255,.35);letter-spacing:2px;text-transform:uppercase" data-en="Student rating" data-ru="Рейтинг" data-tr="Öğrenci puanı">Student rating</div></div>
+  </div>
+
+  <div class="section" style="background:var(--paper)">
+    <div style="max-width:1200px;margin:0 auto">
+      <div class="reveal"><div class="section-label" data-en="How it works" data-ru="Как это работает" data-tr="Nasıl çalışır">How it works</div><div class="section-title" data-en="Three steps. Total clarity." data-ru="Три шага. Полная ясность." data-tr="Üç adım. Tam netlik.">Three steps. Total clarity.</div></div>
+      <div class="steps-grid">
+
+        <div class="step-card reveal" style="transition-delay:.1s">
+          <div class="step-num" style="font-size:11px;font-weight:700;letter-spacing:3px;color:var(--accent);background:#fff3ee;display:inline-block;padding:4px 10px;border-radius:6px;margin-bottom:20px">STEP 01</div>
+          <svg class="step-icon" viewBox="0 0 52 52" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <rect width="52" height="52" rx="16" fill="#fff3ee"/>
+            <path d="M17 16h18v20H17z" rx="2" stroke="#ff4d1c" stroke-width="0"/>
+            <rect x="16" y="15" width="20" height="22" rx="3" stroke="#ff4d1c" stroke-width="1.8"/>
+            <line x1="21" y1="21" x2="31" y2="21" stroke="#ff4d1c" stroke-width="1.8" stroke-linecap="round"/>
+            <line x1="21" y1="25.5" x2="31" y2="25.5" stroke="#ff4d1c" stroke-width="1.8" stroke-linecap="round"/>
+            <line x1="21" y1="30" x2="27" y2="30" stroke="#ff4d1c" stroke-width="1.8" stroke-linecap="round"/>
+            <path d="M28 32l2-2 3 3-2 2-3-3Z" fill="#ff4d1c"/>
+          </svg>
+          <h3 data-en="Paste your text" data-ru="Вставьте текст" data-tr="Metni yapıştırın">Paste your text</h3>
+          <p data-en="Copy any essay, thesis, or article and paste it into Vex.AI. We support all major languages — English, Russian, Spanish, German, French, Turkish and more. No formatting required, just raw text." data-ru="Скопируйте любое эссе, диссертацию или статью и вставьте в Vex.AI. Поддерживаем все основные языки — русский, английский, испанский, немецкий, французский, турецкий и другие. Форматирование не требуется." data-tr="Herhangi bir makale, tez veya yazıyı kopyalayıp Vex.AI'ya yapıştırın. Tüm dilleri destekliyoruz — İngilizce, Rusça, İspanyolca, Almanca, Fransızca, Türkçe ve daha fazlası.">Copy any essay, thesis, or article and paste it into Vex.AI. We support all major languages — English, Russian, Spanish, German, French, Turkish and more. No formatting required, just raw text.</p>
+        </div>
+
+        <div class="step-card reveal" style="transition-delay:.2s">
+          <div class="step-num" style="font-size:11px;font-weight:700;letter-spacing:3px;color:#1a1aff;background:#eef2ff;display:inline-block;padding:4px 10px;border-radius:6px;margin-bottom:20px">STEP 02</div>
+          <svg class="step-icon" style="animation-delay:1.5s" viewBox="0 0 52 52" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <rect width="52" height="52" rx="16" fill="#eef2ff"/>
+            <circle cx="26" cy="24" r="9" stroke="#1a1aff" stroke-width="1.8"/>
+            <circle cx="26" cy="24" r="3" fill="#1a1aff"/>
+            <path d="M26 13v3M26 32v3M15 24h3M34 24h3" stroke="#1a1aff" stroke-width="1.8" stroke-linecap="round"/>
+            <path d="M19.1 17.1l2.1 2.1M30.8 28.8l2.1 2.1M19.1 30.9l2.1-2.1M30.8 19.2l2.1-2.1" stroke="#1a1aff" stroke-width="1.5" stroke-linecap="round"/>
+          </svg>
+          <h3 data-en="Get your AI score" data-ru="Получите AI-оценку" data-tr="AI puanınızı alın">Get your AI score</h3>
+          <p data-en="Our multi-layer algorithm analyzes sentence entropy, writing style, burstiness and vocabulary patterns to give you a precise AI probability score. Results in under 3 seconds, with word-level highlighting showing exactly which parts triggered the detector." data-ru="Наш многоуровневый алгоритм анализирует энтропию предложений, стиль письма, взрывистость и паттерны словарного запаса для точной оценки вероятности ИИ. Результат менее чем за 3 секунды с подсветкой на уровне слов." data-tr="Çok katmanlı algoritmamız cümle entropisi, yazı stili ve kelime desenlerini analiz ederek kesin bir AI olasılık puanı verir. 3 saniye içinde sonuç, tam olarak hangi kısımların dedektörü tetiklediğini gösteren kelime düzeyinde vurgulama ile.">Our multi-layer algorithm analyzes sentence entropy, writing style, burstiness and vocabulary patterns to give you a precise AI probability score. Results in under 3 seconds, with word-level highlighting showing exactly which parts triggered the detector.</p>
+        </div>
+
+        <div class="step-card reveal" style="transition-delay:.3s">
+          <div class="step-num" style="font-size:11px;font-weight:700;letter-spacing:3px;color:#00c46a;background:#efffef;display:inline-block;padding:4px 10px;border-radius:6px;margin-bottom:20px">STEP 03</div>
+          <svg class="step-icon" style="animation-delay:3s" viewBox="0 0 52 52" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <rect width="52" height="52" rx="16" fill="#efffef"/>
+            <path d="M18 26c0-4.4 3.6-8 8-8s8 3.6 8 8" stroke="#00c46a" stroke-width="1.8" stroke-linecap="round"/>
+            <path d="M26 34V26" stroke="#00c46a" stroke-width="1.8" stroke-linecap="round"/>
+            <path d="M22 30l4 4 4-4" stroke="#00c46a" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+            <path d="M16 36h20" stroke="#00c46a" stroke-width="1.8" stroke-linecap="round"/>
+          </svg>
+          <h3 data-en="Humanize & submit" data-ru="Гуманизируйте и сдайте" data-tr="İnsanlaştır ve gönder">Humanize & submit</h3>
+          <p data-en="One click rewrites flagged sentences so your text sounds completely natural and human. Our humanizer preserves your original meaning while removing AI patterns. Tested to pass GPTZero, Turnitin, and all major academic detectors." data-ru="Один клик переписывает отмеченные предложения, делая текст полностью естественным. Гуманизатор сохраняет исходный смысл, убирая признаки ИИ. Проверен на прохождение GPTZero, Turnitin и всех основных академических детекторов." data-tr="Bir tıklamayla işaretlenen cümleler tamamen doğal ve insani görünecek şekilde yeniden yazılır. İnsanlaştırıcı orijinal anlamınızı korurken AI desenlerini kaldırır. GPTZero, Turnitin ve tüm büyük akademik dedektörlerden geçmek için test edilmiştir.">One click rewrites flagged sentences so your text sounds completely natural and human. Our humanizer preserves your original meaning while removing AI patterns. Tested to pass GPTZero, Turnitin, and all major academic detectors.</p>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <div class="section" style="background:var(--cream)">
+    <div style="max-width:1200px;margin:0 auto">
+      <div class="reveal"><div class="section-label" data-en="Features" data-ru="Возможности" data-tr="Özellikler">Features</div><div class="section-title" data-en="Everything built in." data-ru="Всё включено." data-tr="Her şey dahil.">Everything built in.</div></div>
+      <div class="features-grid">
+        <div class="feat-card reveal" style="transition-delay:.1s"><svg class="feat-icon" viewBox="0 0 52 52" fill="none" xmlns="http://www.w3.org/2000/svg"><rect width="52" height="52" rx="14" fill="#fff3ee"/><circle cx="24" cy="24" r="8" stroke="#ff4d1c" stroke-width="1.8"/><path d="M30 30l6 6" stroke="#ff4d1c" stroke-width="2" stroke-linecap="round"/><path d="M21 24h6M24 21v6" stroke="#ff4d1c" stroke-width="1.8" stroke-linecap="round"/></svg><h3 data-en="Detect any AI model" data-ru="Любая AI-модель" data-tr="Herhangi bir AI modeli">Detect any AI model</h3><p data-en="Recognizes text from ChatGPT, GPT-4, Claude, Gemini, DeepSeek, and every major writing tool." data-ru="Распознаёт текст от ChatGPT, GPT-4, Claude, Gemini и других инструментов." data-tr="ChatGPT, GPT-4, Claude, Gemini, DeepSeek ve diğer araçlardan metni tanır.">Recognizes text from ChatGPT, GPT-4, Claude, Gemini, DeepSeek, and every major writing tool.</p></div>
+        <div class="feat-card reveal" style="transition-delay:.2s"><svg class="feat-icon" style="animation-delay:1s" viewBox="0 0 52 52" fill="none" xmlns="http://www.w3.org/2000/svg"><rect width="52" height="52" rx="14" fill="#eef2ff"/><path d="M26 14l2.5 7.5H36l-6.5 4.5 2.5 7.5-6.5-4.5L19 33.5l2.5-7.5L15 21.5h7.5L26 14Z" stroke="#1a1aff" stroke-width="1.8" stroke-linejoin="round"/></svg><h3 data-en="Academic AI score" data-ru="Академическая оценка" data-tr="Akademik AI puanı">Academic AI score</h3><p data-en="See the exact probability your university would flag your text — before you submit it." data-ru="Узнайте точную вероятность флага от университета — до сдачи." data-tr="Üniversitenizin metninizi işaretleme olasılığını öğrenin.">See the exact probability your university would flag your text — before you submit it.</p></div>
+        <div class="feat-card reveal" style="transition-delay:.3s"><svg class="feat-icon" style="animation-delay:2s" viewBox="0 0 52 52" fill="none" xmlns="http://www.w3.org/2000/svg"><rect width="52" height="52" rx="14" fill="#efffef"/><path d="M32 18H20a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V20a2 2 0 0 0-2-2Z" stroke="#00c46a" stroke-width="1.8"/><path d="M22 26l2.5 2.5 5-5" stroke="#00c46a" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><path d="M26 15v3M26 34v3M15 26h3M34 26h3" stroke="#00c46a" stroke-width="1.8" stroke-linecap="round"/></svg><h3 data-en="Instant rewriting" data-ru="Мгновенное переписывание" data-tr="Anında yeniden yazma">Instant rewriting</h3><p data-en="Our humanizer rewrites flagged text so it passes any AI detector — naturally, not robotically." data-ru="Гуманизатор переписывает выделенный текст так, чтобы он прошёл любой детектор." data-tr="İnsanlaştırıcı, işaretlenen metni herhangi bir AI dedektöründen geçecek şekilde yeniden yazar.">Our humanizer rewrites flagged text so it passes any AI detector — naturally, not robotically.</p></div>
+        <div class="feat-card reveal" style="transition-delay:.4s"><svg class="feat-icon" style="animation-delay:3s" viewBox="0 0 52 52" fill="none" xmlns="http://www.w3.org/2000/svg"><rect width="52" height="52" rx="14" fill="#fdfff0"/><rect x="15" y="22" width="22" height="14" rx="3" stroke="#888" stroke-width="1.8"/><path d="M20 22v-4a6 6 0 0 1 12 0v4" stroke="#888" stroke-width="1.8" stroke-linecap="round"/><circle cx="26" cy="29" r="2" fill="#888"/></svg><h3 data-en="Plagiarism included" data-ru="Плагиат включён" data-tr="İntihal dahil">Plagiarism included</h3><p data-en="Every check automatically scans billions of web pages for copied content, at no extra cost." data-ru="Каждая проверка сканирует миллиарды страниц на плагиат — бесплатно." data-tr="Her kontrol, kopyalanan içerik için milyarlarca web sayfasını otomatik olarak tarar.">Every check automatically scans billions of web pages for copied content, at no extra cost.</p></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="section" style="background:var(--paper)">
+    <div style="max-width:1200px;margin:0 auto">
+      <div class="reveal" style="display:flex;justify-content:space-between;align-items:flex-end;margin-bottom:0">
+        <div><div class="section-label" data-en="Testimonials" data-ru="Отзывы" data-tr="Görüşler">Testimonials</div><div class="section-title" data-en="Loved by students." data-ru="Любимый студентами." data-tr="Öğrenciler tarafından seviliyor.">Loved by students.</div></div>
+        <p style="font-size:14px;color:var(--muted)" data-en="Join 2M+ students worldwide" data-ru="Присоединитесь к 2M+ студентов" data-tr="2M+ öğrenciye katılın">Join 2M+ students worldwide</p>
+      </div>
+      <div class="reviews-grid">
+
+        <!-- КАРТОЧКА 1 — длинная, с highlighted quote -->
+        <div class="review-card reveal" style="transition-delay:.1s">
+          <div class="stars">★★★★★</div>
+          <div style="background:var(--cream);border-left:3px solid var(--accent);padding:14px 16px;border-radius:0 10px 10px 0;margin-bottom:20px;font-size:15px;font-weight:600;color:var(--ink);line-height:1.5"
+            data-en='"Passed my professor\'s GPTZero check with zero flags."'
+            data-ru='"Прошёл проверку GPTZero преподавателя без единого флага."'
+            data-tr='"Hocamın GPTZero kontrolünden sıfır işaretle geçtim."'>"Passed my professor's GPTZero check with zero flags."</div>
+          <p class="review-text" style="font-style:normal;font-size:14px;color:#555" data-en="I was skeptical at first, but Vex.AI caught AI-written sections in my research paper I had completely missed. The score breakdown tells you exactly where the problems are — not just a vague percentage. Fixed everything before submission." data-ru="Сначала сомневался, но Vex.AI нашёл AI-секции в моей работе. Разбивка по баллам показывает точно где проблемы. Исправил всё до сдачи." data-tr="Başta şüpheliydim ama Vex.AI tamamen gözden kaçırdığım bölümleri buldu. Puan dökümü sorunların nerede olduğunu tam olarak gösteriyor.">I was skeptical at first, but Vex.AI caught AI-written sections in my research paper I had completely missed. The score breakdown tells you exactly where the problems are — not just a vague percentage. Fixed everything before submission.</p>
+          <div class="reviewer">
+            <div class="reviewer-av" style="background:linear-gradient(135deg,#ff4d1c,#ff8c6b);color:#fff;font-size:15px;font-weight:700">A</div>
+            <div><div class="reviewer-name">Amanda R.</div><div class="reviewer-loc">University student, USA</div></div>
+          </div>
+        </div>
+
+        <!-- КАРТОЧКА 2 — короткая, с тегами использования -->
+        <div class="review-card reveal" style="transition-delay:.2s">
+          <div class="stars">★★★★★</div>
+          <p class="review-text" data-en='"Saved me twice in one semester. I use AI to brainstorm, then rewrite manually — but my phrasing still gets flagged. Vex.AI shows me exactly which sentences look robotic. Honestly couldn't submit without checking here first."' data-ru='"Спас меня дважды за семестр. Использую ИИ для набросков, потом переписываю вручную — но формулировки всё равно флагает. Vex.AI показывает точно что выглядит роботизировано."' data-tr='"Bir dönemde beni iki kez kurtardı. Taslaklar için AI kullanıp manuel yeniden yazıyorum — ama ifadeler yine işaretleniyor. Vex.AI hangi cümlelerin robotik göründüğünü gösteriyor."'>"Saved me twice in one semester. I use AI to brainstorm, then rewrite manually — but my phrasing still gets flagged. Vex.AI shows me exactly which sentences look robotic. Honestly couldn't submit without checking here first."</p>
+          <div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:20px">
+            <span style="background:#f0f0f0;border-radius:100px;padding:4px 11px;font-size:11px;font-weight:600;color:#555"
+              data-en="✓ Used weekly" data-ru="✓ Использую еженедельно" data-tr="✓ Haftalık kullanılıyor">✓ Used weekly</span>
+            <span style="background:#fff3ee;border-radius:100px;padding:4px 11px;font-size:11px;font-weight:600;color:var(--accent)"
+              data-en="✓ Humanizer" data-ru="✓ Гуманизатор" data-tr="✓ İnsanlaştırıcı">✓ Humanizer</span>
+          </div>
+          <div class="reviewer">
+            <div class="reviewer-av" style="background:linear-gradient(135deg,#1a1aff,#6b6bff);color:#fff;font-size:15px;font-weight:700">K</div>
+            <div><div class="reviewer-name">Kevin P.</div><div class="reviewer-loc">Graduate student, UK</div></div>
+          </div>
+        </div>
+
+        <!-- КАРТОЧКА 3 — средняя, с рейтинг-строкой по критериям -->
+        <div class="review-card reveal" style="transition-delay:.3s">
+          <div class="stars">★★★★★</div>
+          <p class="review-text" style="font-style:normal" data-en='"As a PhD candidate I needed a detector that doesn't give false positives on technical writing. Vex.AI handles academic tone really well — it found subtle AI patterns in my literature review I hadn't noticed at all."' data-ru='"Как кандидату PhD мне нужен детектор без ложных срабатываний на технические тексты. Vex.AI отлично справляется с академическим тоном — нашёл тонкие AI-паттерны, которые я не заметил."' data-tr='"Doktora adayı olarak teknik yazılarda yanlış pozitif vermeyen bir dedektöre ihtiyacım vardı. Vex.AI akademik tonu gerçekten iyi işliyor."'>"As a PhD candidate I needed a detector that doesn't give false positives on technical writing. Vex.AI handles academic tone really well — it found subtle AI patterns in my literature review I hadn't noticed at all."</p>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:20px">
+            <div style="background:var(--cream);border-radius:10px;padding:10px 12px">
+              <div style="font-size:10px;color:var(--muted);font-weight:600;letter-spacing:.5px;margin-bottom:3px"
+                data-en="ACCURACY" data-ru="ТОЧНОСТЬ" data-tr="DOĞRULUK">ACCURACY</div>
+              <div style="font-size:16px;font-weight:800;color:var(--ink)">9.5<span style="font-size:11px;font-weight:500;color:var(--muted)">/10</span></div>
+            </div>
+            <div style="background:var(--cream);border-radius:10px;padding:10px 12px">
+              <div style="font-size:10px;color:var(--muted);font-weight:600;letter-spacing:.5px;margin-bottom:3px"
+                data-en="EASE OF USE" data-ru="УДОБСТВО" data-tr="KULLANIM KOLAYLIĞI">EASE OF USE</div>
+              <div style="font-size:16px;font-weight:800;color:var(--ink)">10<span style="font-size:11px;font-weight:500;color:var(--muted)">/10</span></div>
+            </div>
+          </div>
+          <div class="reviewer">
+            <div class="reviewer-av" style="background:linear-gradient(135deg,#00c46a,#00e67d);color:#fff;font-size:15px;font-weight:700">M</div>
+            <div><div class="reviewer-name">Maria S.</div><div class="reviewer-loc">PhD candidate, Germany</div></div>
+          </div>
+        </div>
+
+        <!-- КАРТОЧКА 4 — короткая и прямая, с before/after -->
+        <div class="review-card reveal" style="transition-delay:.4s">
+          <div class="stars">★★★★★</div>
+          <p class="review-text" style="font-size:15px" data-en='"Other detectors gave me a 90% AI score on text I wrote myself. Vex.AI is actually calibrated well. Results are instant and the UI takes 30 seconds to learn. Best $9.99 I've spent this semester."' data-ru='"Другие детекторы давали 90% AI на мой собственный текст. Vex.AI хорошо откалиброван. Результаты мгновенные, интерфейс понимаешь за 30 секунд."' data-tr='"Diğer dedektörler kendi yazdığım metne %90 AI puanı verdi. Vex.AI iyi kalibre edilmiş. Sonuçlar anında, arayüzü 30 saniyede öğreniyorsunuz."'>"Other detectors gave me a 90% AI score on text I wrote myself. Vex.AI is actually calibrated well. Results are instant and the UI takes 30 seconds to learn. Best $9.99 I've spent this semester."</p>
+          <div style="background:var(--cream);border-radius:12px;padding:12px 14px;margin-bottom:20px;display:flex;align-items:center;justify-content:space-between;font-size:12px;font-weight:700">
+            <div style="text-align:center"><div style="color:#ff4d1c;font-size:18px;font-weight:800">87%</div><div style="color:var(--muted);font-weight:500" data-en="before" data-ru="до" data-tr="önce">before</div></div>
+            <div style="color:var(--muted)">→</div>
+            <div style="text-align:center"><div style="color:#00c46a;font-size:18px;font-weight:800">3%</div><div style="color:var(--muted);font-weight:500" data-en="after humanizer" data-ru="после гуманизатора" data-tr="insanlaştırıcıdan sonra">after humanizer</div></div>
+          </div>
+          <div class="reviewer">
+            <div class="reviewer-av" style="background:linear-gradient(135deg,#f59e0b,#fbbf24);color:#fff;font-size:15px;font-weight:700">J</div>
+            <div><div class="reviewer-name">James T.</div><div class="reviewer-loc">College student, Canada</div></div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- HUMANIZER -->
+<div id="human" class="page" style="margin-top:60px">
+  <div class="tool-hero">
+    <div class="hero-bg-grid"></div>
+    <div class="hero-blob" style="width:400px;height:400px;background:rgba(0,196,106,.1);top:-80px;left:-100px;animation:float 12s ease-in-out infinite"></div>
+    <div class="hero-blob" style="width:300px;height:300px;background:rgba(255,77,28,.07);bottom:-60px;right:-80px;animation:float 16s ease-in-out infinite reverse"></div>
+    <div style="position:relative;text-align:center;width:100%">
+      <div class="badge" style="background:var(--green)"><div class="badge-dot" style="background:#fff"></div><span data-en="AI Humanizer" data-ru="ИИ Гуманизатор" data-tr="AI İnsanlaştırıcı" data-es="Humanizador IA">AI Humanizer</span></div>
+      <h1 style="font-family:'Syne',sans-serif;font-size:68px;font-weight:800;letter-spacing:-3px;text-align:center;max-width:800px;margin:0 auto 20px;line-height:1;animation:fadeup .7s ease .1s both">Make it sound <em style="font-style:normal;color:var(--green)" data-en="human." data-ru="живым." data-tr="insanca." data-es="humano.">human.</em></h1>
+      <p style="font-size:17px;color:var(--muted);text-align:center;max-width:480px;margin:0 auto 48px;line-height:1.7;animation:fadeup .7s ease .2s both" data-en="Paste AI-generated text and get a natural, undetectable version in seconds." data-ru="Вставьте AI-текст и получите естественную, неотличимую версию за секунды." data-tr="AI tarafından oluşturulan metni yapıştırın ve saniyeler içinde doğal bir versiyon alın." data-es="Pega texto generado por IA y obtén una versión natural e indetectable en segundos.">Paste AI-generated text and get a natural, undetectable version in seconds.</p>
+      <div class="tool-input-box">
+        <textarea id="htxt" placeholder="Paste your AI-generated text here..." data-en-ph="Paste your AI-generated text here..." data-ru-ph="Вставьте ваш AI-текст сюда..." data-tr-ph="AI tarafından oluşturulan metni buraya yapıştırın..." data-es-ph="Pega tu texto generado por IA aquí..."></textarea>
+        <div class="tool-toolbar"><button class="check-btn" onclick="doHuman()" style="background:var(--green)"><span data-en="Humanize →" data-ru="Гуманизировать →" data-tr="İnsanlaştır →" data-es="Humanizar →">Humanize →</span></button></div>
+      </div>
+      <div class="tool-result" id="hout" style="display:none">
+        <div class="tool-result-box" style="background:#efffef;border-color:#b5f5c8">
+          <div style="font-size:12px;font-weight:700;color:var(--green);margin-bottom:12px;letter-spacing:.5px" data-en="✓ HUMANIZED SUCCESSFULLY" data-ru="✓ УСПЕШНО ГУМАНИЗИРОВАНО" data-tr="✓ BAŞARIYLA İNSANLAŞTIRILDI" data-es="✓ HUMANIZADO CON ÉXITO">✓ HUMANIZED SUCCESSFULLY</div>
+          <p id="houtP" style="font-size:15px;color:var(--ink);line-height:1.8;text-align:left"></p>
+          <button onclick="navigator.clipboard.writeText(document.getElementById('houtP').textContent)" style="background:none;border:1px solid var(--border);color:var(--muted);padding:8px 18px;border-radius:9px;font-size:13px;cursor:pointer;margin-top:14px;font-family:inherit" data-en="Copy text" data-ru="Копировать" data-tr="Kopyala">Copy text</button>
+        </div>
+      </div>
+      <div class="tool-chips">
+        <div class="tool-chip"><svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M8 2v3M8 11v3M2 8h3M11 8h3M4.2 4.2l2.1 2.1M9.7 9.7l2.1 2.1M4.2 11.8l2.1-2.1M9.7 6.3l2.1-2.1" stroke="#ff4d1c" stroke-width="1.5" stroke-linecap="round"/></svg><span data-en="Under 3 seconds" data-ru="Меньше 3 секунд" data-tr="3 saniyeden az" data-es="En menos de 3 segundos">Under 3 seconds</span></div>
+        <div class="tool-chip"><svg width="16" height="16" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="6" stroke="#1a1aff" stroke-width="1.5"/><path d="M5 8.5l2 2 4-4" stroke="#1a1aff" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg><span data-en="Passes GPTZero" data-ru="Проходит GPTZero" data-tr="GPTZero'dan geçer" data-es="Supera GPTZero">Passes GPTZero</span></div>
+        <div class="tool-chip"><svg width="16" height="16" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="6" stroke="#00c46a" stroke-width="1.5"/><path d="M5 8.5l2 2 4-4" stroke="#00c46a" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg><span data-en="Passes Turnitin" data-ru="Проходит Turnitin" data-tr="Turnitin'den geçer" data-es="Supera Turnitin">Passes Turnitin</span></div>
+        <div class="tool-chip"><svg width="16" height="16" viewBox="0 0 16 16" fill="none"><rect x="3" y="7" width="10" height="7" rx="1.5" stroke="#888" stroke-width="1.5"/><path d="M5 7V5a3 3 0 0 1 6 0v2" stroke="#888" stroke-width="1.5" stroke-linecap="round"/><circle cx="8" cy="10.5" r="1" fill="#888"/></svg><span data-en="Never stored" data-ru="Не сохраняется" data-tr="Saklanmaz" data-es="Nunca almacenado">Never stored</span></div>
+      </div>
+    </div>
+  </div>
+  <div style="background:var(--ink);padding:56px 80px;display:grid;grid-template-columns:repeat(3,1fr);text-align:center">
+    <div class="reveal" style="padding:16px;border-right:1px solid rgba(255,255,255,.08)"><div style="font-family:'Syne',sans-serif;font-size:56px;font-weight:800;color:var(--green);margin-bottom:6px;letter-spacing:-2px">75%</div><div style="font-size:12px;color:rgba(255,255,255,.35);letter-spacing:2px;text-transform:uppercase" data-en="Avg AI score reduction" data-ru="Снижение оценки AI" data-tr="Ortalama düşüş" data-es="Reducción promedio IA">Avg AI score reduction</div></div>
+    <div class="reveal" style="padding:16px;border-right:1px solid rgba(255,255,255,.08);transition-delay:.1s"><div style="font-family:'Syne',sans-serif;font-size:56px;font-weight:800;color:var(--paper);margin-bottom:6px;letter-spacing:-2px">&lt;3s</div><div style="font-size:12px;color:rgba(255,255,255,.35);letter-spacing:2px;text-transform:uppercase" data-en="Processing time" data-ru="Время обработки" data-tr="İşlem süresi" data-es="Tiempo de procesado">Processing time</div></div>
+    <div class="reveal" style="padding:16px;transition-delay:.2s"><div style="font-family:'Syne',sans-serif;font-size:56px;font-weight:800;color:var(--paper);margin-bottom:6px;letter-spacing:-2px">12+</div><div style="font-size:12px;color:rgba(255,255,255,.35);letter-spacing:2px;text-transform:uppercase" data-en="AI patterns removed" data-ru="Паттернов удалено" data-tr="AI deseni kaldırıldı" data-es="Patrones IA eliminados">AI patterns removed</div></div>
+  </div>
+</div>
+
+<!-- PLAGIARISM -->
+<div id="checker" class="page" style="margin-top:60px">
+  <div class="tool-hero">
+    <div class="hero-bg-grid"></div>
+    <div class="hero-blob" style="width:400px;height:400px;background:rgba(26,26,255,.08);top:-80px;right:-100px;animation:float 14s ease-in-out infinite"></div>
+    <div class="hero-blob" style="width:250px;height:250px;background:rgba(168,85,247,.07);bottom:-60px;left:-60px;animation:float 10s ease-in-out infinite reverse"></div>
+    <div style="position:relative;text-align:center;width:100%">
+      <div class="badge" style="background:var(--accent2)"><div class="badge-dot" style="background:#fff"></div><span data-en="Plagiarism Checker" data-ru="Проверка плагиата" data-tr="İntihal Denetleyicisi" data-es="Detector de plagio">Plagiarism Checker</span></div>
+      <h1 style="font-family:'Syne',sans-serif;font-size:68px;font-weight:800;letter-spacing:-3px;text-align:center;max-width:800px;margin:0 auto 20px;line-height:1;animation:fadeup .7s ease .1s both">Is it <em style="font-style:normal;color:var(--accent2)" data-en="original?" data-ru="оригинальным?" data-tr="orijinal mi?" data-es="¿original?">original?</em></h1>
+      <p style="font-size:17px;color:var(--muted);text-align:center;max-width:480px;margin:0 auto 48px;line-height:1.7;animation:fadeup .7s ease .2s both" data-en="Check your text against billions of sources. Get results in seconds." data-ru="Проверьте текст по миллиардам источников. Результат за секунды." data-tr="Metninizi milyarlarca kaynakla karşılaştırın." data-es="Compara tu texto con miles de millones de fuentes. Resultados en segundos.">Check your text against billions of sources. Get results in seconds.</p>
+      <div class="tool-input-box">
+        <textarea id="ptxt" placeholder="Paste your text to check for plagiarism..." data-en-ph="Paste your text to check for plagiarism..." data-ru-ph="Вставьте текст для проверки на плагиат..." data-tr-ph="İntihal kontrolü için metni buraya yapıştırın..." data-es-ph="Pega tu texto para comprobar el plagio..."></textarea>
+        <div class="tool-toolbar"><button class="check-btn" onclick="doCheck2()" style="background:var(--accent2)"><span data-en="Check now →" data-ru="Проверить →" data-tr="Şimdi kontrol et →" data-es="Comprobar →">Check now →</span></button></div>
+      </div>
+      <div class="tool-result" id="pout" style="display:none">
+        <div class="tool-result-box" style="background:#efffef;border-color:#b5f5c8">
+          <div style="display:flex;align-items:center;gap:14px">
+            <div style="width:56px;height:56px;background:var(--green);border-radius:50%;display:flex;align-items:center;justify-content:center;color:#fff;font-size:22px;font-weight:700;flex-shrink:0">✓</div>
+            <div style="text-align:left"><p style="font-size:20px;color:var(--green);font-weight:700" data-en="0% Plagiarism detected" data-ru="0% Плагиат не найден" data-tr="0% İntihal tespit edildi" data-es="0% Plagio detectado">0% Plagiarism detected</p><p style="font-size:14px;color:var(--muted);margin-top:4px" data-en="Your text appears to be original" data-ru="Ваш текст выглядит оригинальным" data-tr="Metniniz orijinal görünüyor" data-es="Tu texto parece ser original">Your text appears to be original</p></div>
+          </div>
+        </div>
+      </div>
+      <div class="tool-chips">
+        <div class="tool-chip"><svg width="16" height="16" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="6" stroke="#1a1aff" stroke-width="1.5"/><path d="M5.5 8h5M8 5v6" stroke="#1a1aff" stroke-width="1.5" stroke-linecap="round"/></svg><span data-en="Billions of sources" data-ru="Миллиарды источников" data-tr="Milyarlarca kaynak" data-es="Miles de millones de fuentes">Billions of sources</span></div>
+        <div class="tool-chip"><svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M4 3h5l3 3v7a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1Z" stroke="#888" stroke-width="1.5" stroke-linejoin="round"/><path d="M9 3v3h3M6 9h4M6 11.5h2.5" stroke="#888" stroke-width="1.3" stroke-linecap="round"/></svg><span data-en="Academic databases" data-ru="Академические базы" data-tr="Akademik veritabanları" data-es="Bases de datos académicas">Academic databases</span></div>
+        <div class="tool-chip"><svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M8 2v3M8 11v3M2 8h3M11 8h3M4.2 4.2l2.1 2.1M9.7 9.7l2.1 2.1M4.2 11.8l2.1-2.1M9.7 6.3l2.1-2.1" stroke="#ff4d1c" stroke-width="1.5" stroke-linecap="round"/></svg><span data-en="Instant results" data-ru="Мгновенные результаты" data-tr="Anında sonuçlar" data-es="Resultados instantáneos">Instant results</span></div>
+      </div>
+    </div>
+  </div>
+  <div style="background:var(--ink);padding:56px 80px;display:grid;grid-template-columns:repeat(3,1fr);text-align:center">
+    <div class="reveal" style="padding:16px;border-right:1px solid rgba(255,255,255,.08)"><div style="font-family:'Syne',sans-serif;font-size:56px;font-weight:800;color:var(--paper);margin-bottom:6px;letter-spacing:-2px">1B+</div><div style="font-size:12px;color:rgba(255,255,255,.35);letter-spacing:2px;text-transform:uppercase" data-en="Sources indexed" data-ru="Источников" data-tr="Kaynaklar" data-es="Fuentes indexadas">Sources indexed</div></div>
+    <div class="reveal" style="padding:16px;border-right:1px solid rgba(255,255,255,.08);transition-delay:.1s"><div style="font-family:'Syne',sans-serif;font-size:56px;font-weight:800;color:var(--paper);margin-bottom:6px;letter-spacing:-2px">99%</div><div style="font-size:12px;color:rgba(255,255,255,.35);letter-spacing:2px;text-transform:uppercase" data-en="Match accuracy" data-ru="Точность совпадений" data-tr="Eşleşme doğruluğu" data-es="Precisión de coincidencia">Match accuracy</div></div>
+    <div class="reveal" style="padding:16px;transition-delay:.2s"><div style="font-family:'Syne',sans-serif;font-size:56px;font-weight:800;color:var(--paper);margin-bottom:6px;letter-spacing:-2px">Free</div><div style="font-size:12px;color:rgba(255,255,255,.35);letter-spacing:2px;text-transform:uppercase" data-en="With every scan" data-ru="С каждой проверкой" data-tr="Her taramada" data-es="Con cada análisis">With every scan</div></div>
+  </div>
+</div>
+
+<!-- PRICING -->
+<div id="pricing" class="page" style="margin-top:60px">
+  <div class="pricing-hero">
+    <div class="hero-bg-grid" style="opacity:.2"></div>
+    <div class="hero-blob" style="width:500px;height:500px;background:rgba(255,77,28,.08);top:-150px;right:-100px;animation:float 14s ease-in-out infinite"></div>
+    <div style="position:relative">
+      <div class="badge" style="margin-bottom:24px;background:var(--ink)"><div class="badge-dot"></div><span data-en="Simple pricing" data-ru="Простые цены" data-tr="Basit fiyatlandırma" data-es="Precios simples">Simple pricing</span></div>
+      <h1 style="font-family:'Syne',sans-serif;font-size:64px;font-weight:800;color:var(--ink);letter-spacing:-3px;margin-bottom:16px;line-height:1"><span data-en="Plans for every" data-ru="Планы для любого" data-tr="Her" data-es="Planes para cada">Plans for every</span><br><em style="font-style:normal;color:var(--accent)" data-en="deadline." data-ru="дедлайна." data-tr="son tarih." data-es="fecha límite.">deadline.</em></h1>
+      <p style="font-size:17px;color:var(--muted)" data-en="Start free, upgrade anytime. Cancel whenever." data-ru="Начните бесплатно, обновите в любое время." data-tr="Ücretsiz başlayın, istediğiniz zaman yükseltin." data-es="Empieza gratis, mejora cuando quieras. Cancela cuando quieras.">Start free, upgrade anytime. Cancel whenever.</p>
+    </div>
+  </div>
+  <div style="padding:0 0 100px">
+    <div class="pricing-grid">
+      <div class="price-card reveal" style="transition-delay:.1s">
+        <div class="price-badge default" data-en="7-DAY TRIAL" data-ru="7 ДНЕЙ" data-tr="7 GÜNLÜK" data-es="PRUEBA 7 DÍAS">7-DAY TRIAL</div>
+        <h2 data-en="Starter" data-ru="Стартовый" data-tr="Başlangıç" data-es="Inicial">Starter</h2>
+        <p class="price-desc" data-en="For quickly exploring before committing to a full plan." data-ru="Для знакомства перед полной подпиской." data-tr="Tam bir plana geçmeden önce keşfetmek için." data-es="Para explorar rápidamente antes de comprometerse con un plan completo.">For quickly exploring before committing to a full plan.</p>
+        <div class="price-amount"><span class="price-currency">$</span><span class="price-num">2</span></div>
+        <div class="price-per" data-en="then $19.99/month" data-ru="затем $19.99/мес" data-tr="ardından $19.99/ay" data-es="luego $19.99/mes">then $19.99/month</div>
+        <div class="price-divider"></div>
+        <ul class="price-features">
+          <li data-en="50 detections" data-ru="50 проверок" data-tr="50 tespit" data-es="50 detecciones">50 detections</li>
+          <li data-en="Basic humanizer" data-ru="Базовый гуманизатор" data-tr="Temel insanlaştırıcı" data-es="Humanizador básico">Basic humanizer</li>
+          <li data-en="Plagiarism check" data-ru="Проверка плагиата" data-tr="İntihal kontrolü" data-es="Control de plagio">Plagiarism check</li>
+        </ul>
+        <button class="price-cta outline" onclick="openModal('signup')" data-en="Start trial" data-ru="Начать пробный" data-tr="Denemeyi başlat" data-es="Iniciar prueba">Start trial</button>
+      </div>
+      <div class="price-card featured reveal" style="transition-delay:.2s">
+        <div class="price-badge pop" data-en="MOST POPULAR" data-ru="ХИТ" data-tr="EN POPÜLER" data-es="MÁS POPULAR">MOST POPULAR</div>
+        <h2 data-en="Monthly" data-ru="Месячный" data-tr="Aylık" data-es="Mensual">Monthly</h2>
+        <p class="price-desc" data-en="For essays, deadlines, and regular academic work." data-ru="Для эссе, дедлайнов и регулярной учёбы." data-tr="Makaleler ve düzenli akademik çalışmalar için." data-es="Para ensayos, fechas límite y trabajo académico habitual.">For essays, deadlines, and regular academic work.</p>
+        <div class="price-amount"><span class="price-currency" style="color:var(--paper)">$</span><span class="price-num">9<span style="font-size:36px">.99</span></span><span class="price-orig">$19.99</span></div>
+        <div class="price-per" data-en="per month" data-ru="в месяц" data-tr="aylık" data-es="por mes">per month</div>
+        <div class="price-divider"></div>
+        <ul class="price-features">
+          <li data-en="Unlimited detections" data-ru="Безлимитные проверки" data-tr="Sınırsız tespit" data-es="Detecciones ilimitadas">Unlimited detections</li>
+          <li data-en="Advanced humanizer" data-ru="Расширенный гуманизатор" data-tr="Gelişmiş insanlaştırıcı" data-es="Humanizador avanzado">Advanced humanizer</li>
+          <li data-en="Plagiarism check" data-ru="Проверка плагиата" data-tr="İntihal kontrolü">Plagiarism check</li>
+          <li data-en="Priority support" data-ru="Приоритетная поддержка" data-tr="Öncelikli destek" data-es="Soporte prioritario">Priority support</li>
+          <li data-en="History saved" data-ru="История сохраняется" data-tr="Geçmiş kaydedildi" data-es="Historial guardado">History saved</li>
+        </ul>
+        <button class="price-cta filled" onclick="openModal('signup')" data-en="Get started" data-ru="Начать" data-tr="Başla" data-es="Empezar">Get started</button>
+      </div>
+      <div class="price-card reveal" style="transition-delay:.3s">
+        <div class="price-badge best" data-en="BEST VALUE" data-ru="ЛУЧШАЯ ЦЕНА" data-tr="EN İYİ DEĞER" data-es="MEJOR VALOR">BEST VALUE</div>
+        <h2 data-en="Annual" data-ru="Годовой" data-tr="Yıllık" data-es="Anual">Annual</h2>
+        <p class="price-desc" data-en="For students who write all year and want to save max." data-ru="Для студентов, которые пишут весь год." data-tr="Yıl boyunca yazan öğrenciler için." data-es="Para estudiantes que escriben todo el año y quieren ahorrar al máximo.">For students who write all year and want to save max.</p>
+        <div class="price-amount"><span class="price-currency">$</span><span class="price-num">4<span style="font-size:36px">.99</span></span><span class="price-orig">$19.99</span></div>
+        <div class="price-per" data-en="per month, billed annually" data-ru="в месяц, оплата ежегодно" data-tr="aylık, yıllık faturalandırılır" data-es="por mes, facturado anualmente">per month, billed annually</div>
+        <div class="price-divider"></div>
+        <ul class="price-features">
+          <li data-en="Everything in Monthly" data-ru="Всё из Месячного" data-tr="Aylık plandaki her şey" data-es="Todo del plan Mensual">Everything in Monthly</li>
+          <li data-en="75% savings vs monthly" data-ru="Экономия 75%" data-tr="%75 tasarruf" data-es="75% de ahorro vs mensual">75% savings vs monthly</li>
+          <li data-en="Early access to features" data-ru="Ранний доступ" data-tr="Erken erişim" data-es="Acceso anticipado a funciones">Early access to features</li>
+        </ul>
+        <button class="price-cta outline" onclick="openModal('signup')" data-en="Get annual" data-ru="Выбрать годовой" data-tr="Yıllık al" data-es="Obtener anual">Get annual</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- FAQ -->
+<div id="faq" class="page" style="margin-top:60px;padding:100px 80px;max-width:860px;margin-left:auto;margin-right:auto">
+  <div class="reveal"><div class="section-label" data-en="FAQ" data-ru="FAQ" data-tr="SSS">FAQ</div>
+  <div class="section-title" style="margin-bottom:56px"><span data-en="Got questions?" data-ru="Есть вопросы?" data-tr="Sorularınız mı var?" data-es="¿Tienes preguntas?">Got questions?</span><br><span style="color:var(--accent)" data-en="Here's the truth." data-ru="Вот ответы." data-tr="İşte cevaplar." data-es="Aquí está la verdad.">Here's the truth.</span></div></div>
+  <div class="faq-item reveal" onclick="toggleFaq(this)"><div class="faq-q"><span data-en="What is an AI detector?" data-ru="Что такое детектор ИИ?" data-tr="AI dedektörü nedir?">What is an AI detector?</span><span class="faq-plus">+</span></div><div class="faq-a" data-en="An AI detector analyzes statistical and linguistic patterns in text to determine the probability that it was generated by an AI model like ChatGPT, GPT-4, Claude, or Gemini. It looks at things like sentence entropy, perplexity, burstiness, and vocabulary distribution — signals that differ measurably between human writers and language models. Vex.AI combines multiple detection layers to give you a reliable score even on edited or paraphrased AI text." data-ru="Детектор ИИ анализирует статистические и лингвистические паттерны в тексте, чтобы определить вероятность генерации его моделью ИИ — ChatGPT, GPT-4, Claude или Gemini. Он смотрит на энтропию предложений, перплексию, взрывистость и распределение словарного запаса. Vex.AI объединяет несколько уровней обнаружения для надёжного результата даже на отредактированном тексте." data-tr="Bir AI dedektörü, metnin ChatGPT, GPT-4, Claude veya Gemini gibi bir AI modeli tarafından oluşturulma olasılığını belirlemek için istatistiksel ve dilbilimsel desenleri analiz eder. Cümle entropisine, şaşkınlığa ve kelime dağılımına bakar. Vex.AI, düzenlenmiş metinde bile güvenilir bir puan için birden fazla algılama katmanını birleştirir.">An AI detector analyzes statistical and linguistic patterns in text to determine the probability that it was generated by an AI model. It looks at sentence entropy, perplexity, burstiness, and vocabulary distribution — signals that differ measurably between human writers and language models. Vex.AI combines multiple detection layers to give you a reliable score even on edited or paraphrased AI text.</div></div>
+  <div class="faq-item reveal" onclick="toggleFaq(this)"><div class="faq-q"><span data-en="How accurate is Vex.AI?" data-ru="Насколько точен Vex.AI?" data-tr="Vex.AI ne kadar doğru?">How accurate is Vex.AI?</span><span class="faq-plus">+</span></div><div class="faq-a" data-en="Our detector achieves 4.5/5 accuracy in student beta testing across 50,000+ samples, cross-validated against GPTZero and Originality.ai. False positive rates on genuine human writing are kept below 4%. For best results, paste at least 150 words — shorter texts have higher variance in any detector, not just ours. We update our models regularly to stay current with new AI writing tools." data-ru="Наш детектор достигает точности 4.5/5 в бета-тестировании на 50 000+ образцах, перекрёстно проверенных с GPTZero и Originality.ai. Доля ложных срабатываний на настоящих человеческих текстах ниже 4%. Для лучших результатов вставляйте не менее 150 слов. Мы регулярно обновляем модели." data-tr="Dedektörümüz, GPTZero ve Originality.ai ile çapraz doğrulanmış 50.000'den fazla örnekte 4,5/5 doğruluk elde eder. Gerçek insan yazısındaki yanlış pozitif oranları %4'ün altında tutulur. En iyi sonuçlar için en az 150 kelime yapıştırın. Modellerimizi düzenli olarak güncelliyoruz.">Our detector achieves 4.5/5 accuracy in student beta testing across 50,000+ samples, cross-validated against GPTZero and Originality.ai. False positive rates on genuine human writing are kept below 4%. For best results, paste at least 150 words — shorter texts have higher variance in any detector. We update our models regularly to stay current with new AI writing tools.</div></div>
+  <div class="faq-item reveal" onclick="toggleFaq(this)"><div class="faq-q"><span data-en="Can it detect ChatGPT and Claude?" data-ru="Обнаруживает ChatGPT и Claude?" data-tr="ChatGPT ve Claude'u tespit edebilir mi?">Can it detect ChatGPT and Claude?</span><span class="faq-plus">+</span></div><div class="faq-a" data-en="Yes. We detect patterns from ChatGPT (3.5 and 4), GPT-4o, Claude (all versions), Gemini, DeepSeek, Mistral, LLaMA, and most major AI writing assistants. Each model has distinct statistical fingerprints. We also detect lightly edited AI text — when someone runs AI output through paraphrasers like Quillbot. The hardest cases are heavily rewritten AI text mixed with original writing, which we handle better than most tools." data-ru="Да. Определяем паттерны от ChatGPT (3.5 и 4), GPT-4o, Claude (все версии), Gemini, DeepSeek, Mistral, LLaMA и большинства AI-ассистентов. У каждой модели есть уникальные статистические отпечатки. Также определяем слегка отредактированный AI-текст — когда пропускают через парафразеры вроде Quillbot." data-tr="Evet. ChatGPT (3.5 ve 4), GPT-4o, Claude (tüm versiyonlar), Gemini, DeepSeek, Mistral, LLaMA ve büyük AI yazma asistanlarından desenleri tespit ediyoruz. Her modelin kendine özgü istatistiksel parmak izleri var. Quillbot gibi parafrazörlerden geçirilmiş hafifçe düzenlenmiş AI metinlerini de tespit ediyoruz.">Yes. We detect patterns from ChatGPT (3.5 and 4), GPT-4o, Claude (all versions), Gemini, DeepSeek, Mistral, LLaMA, and most major AI writing assistants. Each model has distinct statistical fingerprints. We also detect lightly edited AI text — when someone runs output through paraphrasers like Quillbot. The hardest cases are heavily rewritten AI text mixed with original writing, which we handle better than most tools.</div></div>
+  <div class="faq-item reveal" onclick="toggleFaq(this)"><div class="faq-q"><span data-en="Is using AI always cheating?" data-ru="Использование ИИ — всегда обман?" data-tr="AI kullanmak her zaman hile midir?">Is using AI always cheating?</span><span class="faq-plus">+</span></div><div class="faq-a" data-en="No — and this is an important distinction. Policies vary significantly by institution, course, and even assignment. Many universities explicitly allow AI for brainstorming, outlining, grammar checking, or with proper disclosure. Some ban it entirely. Others are still forming policies. Vex.AI doesn't take a stance on this — our tool helps you understand how your text will be perceived by automated detectors, so you can make an informed decision before you submit." data-ru="Нет — и это важное различие. Политика существенно варьируется в зависимости от учреждения, курса и задания. Многие университеты явно разрешают ИИ для брейнсторминга, составления планов, проверки грамматики или с надлежащим раскрытием. Vex.AI не занимает позицию — наш инструмент помогает понять, как ваш текст будет воспринят автоматическими детекторами." data-tr="Hayır — ve bu önemli bir ayrım. Politikalar kuruma, derse ve hatta ödeve göre önemli ölçüde farklılık gösterir. Pek çok üniversite, beyin fırtınası, taslak oluşturma, dilbilgisi kontrolü veya uygun açıklama ile AI kullanımına açıkça izin vermektedir. Vex.AI bir tutum sergilemez — aracımız metninizin otomatik dedektörler tarafından nasıl algılanacağını anlamanıza yardımcı olur.">No — and this is an important distinction. Policies vary significantly by institution, course, and even assignment. Many universities explicitly allow AI for brainstorming, outlining, or grammar checking with proper disclosure. Some ban it entirely. Others are still forming policies. Vex.AI helps you understand how your text will be perceived by automated detectors, so you can make an informed decision before you submit.</div></div>
+  <div class="faq-item reveal" onclick="toggleFaq(this)"><div class="faq-q"><span data-en="Is my text stored?" data-ru="Хранится ли мой текст?" data-tr="Metnim saklanıyor mu?">Is my text stored?</span><span class="faq-plus">+</span></div><div class="faq-a" data-en="Your raw text is never sold, shared, or used to train any models — period. If you're logged in, a brief record of your scan (action type, timestamp, and a short preview) is saved to your personal history so you can track your work. You can delete your history at any time from your account page. Anonymous scans leave no trace at all." data-ru="Ваш текст никогда не продаётся, не передаётся и не используется для обучения моделей — точка. Если вы вошли в аккаунт, краткая запись о проверке (тип действия, временная метка) сохраняется в вашей личной истории. Вы можете удалить историю в любое время. Анонимные проверки не оставляют следов вообще." data-tr="Ham metniniz asla satılmaz, paylaşılmaz veya herhangi bir modeli eğitmek için kullanılmaz. Giriş yaptıysanız, kısa bir tarama kaydı kişisel geçmişinize kaydedilir. Geçmişinizi istediğiniz zaman hesap sayfanızdan silebilirsiniz. Anonim taramalar hiçbir iz bırakmaz.">Your raw text is never sold, shared, or used to train any models — period. If you're logged in, a brief scan record is saved to your personal history so you can track your work. You can delete your history at any time from your account page. Anonymous scans leave no trace at all.</div></div>
+</div>
+
+<!-- ACCOUNT -->
+<div id="account" class="page" style="margin-top:60px">
+  <div class="account-grid">
+    <!-- SIDEBAR -->
+    <div>
+      <div class="account-sidebar">
+        <div class="account-avatar" id="acc-avatar">U</div>
+        <div class="account-name" id="acc-name" style="font-size:17px;font-weight:700;color:var(--ink);margin-bottom:4px"></div>
+        <div class="account-email" id="acc-email">user@email.com</div>
+        <div class="plan-badge" id="acc-plan">Free</div>
+        <div class="words-box">
+          <div class="words-num" id="acc-words">500</div>
+          <div class="words-label" data-en="words balance" data-ru="баланс слов" data-tr="kelime bakiyesi" data-es="saldo de palabras">words balance</div>
+        </div>
+        <!-- Nav items -->
+        <nav class="acc-nav">
+          <div class="acc-nav-item act" onclick="switchAccTab('overview')" id="acc-nav-overview">
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><rect x="1" y="1" width="6" height="6" rx="1.5" stroke="currentColor" stroke-width="1.5"/><rect x="9" y="1" width="6" height="6" rx="1.5" stroke="currentColor" stroke-width="1.5"/><rect x="1" y="9" width="6" height="6" rx="1.5" stroke="currentColor" stroke-width="1.5"/><rect x="9" y="9" width="6" height="6" rx="1.5" stroke="currentColor" stroke-width="1.5"/></svg>
+            <span data-en="Overview" data-ru="Обзор" data-tr="Genel Bakış">Overview</span>
+          </div>
+          <div class="acc-nav-item" onclick="switchAccTab('history')" id="acc-nav-history">
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="6.5" stroke="currentColor" stroke-width="1.5"/><path d="M8 4.5V8l2.5 1.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            <span data-en="Scan History" data-ru="История проверок" data-tr="Geçmiş">Scan History</span>
+          </div>
+          <div class="acc-nav-item" onclick="switchAccTabWithPrefill('profile')" id="acc-nav-profile">
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="5" r="3" stroke="currentColor" stroke-width="1.5"/><path d="M2 14c0-3.314 2.686-5 6-5s6 1.686 6 5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+            <span data-en="Profile" data-ru="Профиль" data-tr="Profil">Profile</span>
+          </div>
+          <div class="acc-nav-item" onclick="switchAccTab('security')" id="acc-nav-security">
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><rect x="3" y="7" width="10" height="7" rx="1.5" stroke="currentColor" stroke-width="1.5"/><path d="M5 7V5a3 3 0 0 1 6 0v2" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><circle cx="8" cy="10.5" r="1" fill="currentColor"/></svg>
+            <span data-en="Security" data-ru="Безопасность" data-tr="Güvenlik">Security</span>
+          </div>
+          <div class="acc-nav-item" onclick="switchAccTab('notifications')" id="acc-nav-notifications">
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M8 2a5 5 0 0 0-5 5v2l-1.5 2H14.5L13 9V7a5 5 0 0 0-5-5Z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/><path d="M6.5 13.5a1.5 1.5 0 0 0 3 0" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+            <span data-en="Notifications" data-ru="Уведомления" data-tr="Bildirimler">Notifications</span>
+          </div>
+          <div class="acc-nav-item" onclick="switchAccTab('plan')" id="acc-nav-plan">
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M2 4h12v8a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V4Z" stroke="currentColor" stroke-width="1.5"/><path d="M2 4l1.5-2h9L14 4" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/><path d="M6 8h4M8 6v4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+            <span data-en="Plan & Billing" data-ru="Тариф и оплата" data-tr="Plan & Ödeme">Plan & Billing</span>
+          </div>
+        </nav>
+        <button class="logout-btn" onclick="doLogout()" data-en="Sign out" data-ru="Выйти" data-tr="Çıkış" data-es="Cerrar sesión">Sign out</button>
+      </div>
+    </div>
+
+    <!-- MAIN CONTENT -->
+    <div>
+
+      <!-- OVERVIEW TAB -->
+      <div class="acc-tab act" id="acc-tab-overview">
+        <div class="acc-section-title" data-en="Overview" data-ru="Обзор" data-tr="Genel Bakış">Overview</div>
+        <div class="acc-section-sub" data-en="Your account at a glance." data-ru="Краткий обзор вашего аккаунта." data-tr="Hesabınıza genel bakış.">Your account at a glance.</div>
+        <div class="acc-stat-grid">
+          <div class="acc-stat">
+            <div class="acc-stat-num" id="stat-scans">0</div>
+            <div class="acc-stat-label" data-en="Total scans" data-ru="Всего проверок" data-tr="Toplam tarama">Total scans</div>
+          </div>
+          <div class="acc-stat">
+            <div class="acc-stat-num" id="stat-humanized">0</div>
+            <div class="acc-stat-label" data-en="Humanizations" data-ru="Гуманизаций" data-tr="İnsanlaştırma">Humanizations</div>
+          </div>
+          <div class="acc-stat">
+            <div class="acc-stat-num" id="acc-words2">500</div>
+            <div class="acc-stat-label" data-en="Words left" data-ru="Слов осталось" data-tr="Kalan kelime">Words left</div>
+          </div>
+        </div>
+        <div class="acc-card">
+          <div class="acc-card-title" data-en="Recent Activity" data-ru="Последние действия" data-tr="Son Aktivite">Recent Activity</div>
+          <div id="history-list-overview"></div>
+        </div>
+        <div class="acc-card" style="background:linear-gradient(135deg,var(--ink),#1a1a2e);color:var(--paper);border-color:transparent">
+          <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:16px">
+            <div>
+              <div style="font-family:'Syne',sans-serif;font-size:20px;font-weight:800;margin-bottom:6px" data-en="Upgrade to Premium" data-ru="Перейти на Premium" data-tr="Premium'a Yükselt">Upgrade to Premium</div>
+              <div style="font-size:14px;color:rgba(255,255,255,.55)" data-en="Unlimited scans, advanced humanizer, priority support." data-ru="Безлимитные проверки, продвинутый гуманизатор, приоритетная поддержка." data-tr="Sınırsız tarama, gelişmiş insanlaştırıcı, öncelikli destek.">Unlimited scans, advanced humanizer, priority support.</div>
+            </div>
+            <button onclick="switchAccTab('plan')" style="background:var(--accent);color:#fff;border:none;padding:12px 24px;border-radius:10px;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit;white-space:nowrap" data-en="View plans →" data-ru="Посмотреть планы →" data-tr="Planları gör →">View plans →</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- HISTORY TAB -->
+      <div class="acc-tab" id="acc-tab-history">
+        <div class="acc-section-title" data-en="Scan History" data-ru="История проверок" data-tr="Tarama Geçmişi">Scan History</div>
+        <div class="acc-section-sub" data-en="All your detections and humanizations." data-ru="Все ваши проверки и гуманизации." data-tr="Tüm tespit ve insanlaştırmalarınız.">All your detections and humanizations.</div>
+        <div id="history-list"><div class="history-empty">No scans yet. Run your first detection above.</div></div>
+      </div>
+
+      <!-- PROFILE TAB -->
+      <div class="acc-tab" id="acc-tab-profile">
+        <div class="acc-section-title" data-en="Profile" data-ru="Профиль" data-tr="Profil">Profile</div>
+        <div class="acc-section-sub" data-en="Manage your personal information." data-ru="Управляйте личной информацией." data-tr="Kişisel bilgilerinizi yönetin.">Manage your personal information.</div>
+        <div class="acc-card">
+          <div class="acc-card-title" data-en="Personal Info" data-ru="Личные данные" data-tr="Kişisel Bilgiler">Personal Info</div>
+          <div class="acc-field">
+            <label data-en="Full Name" data-ru="Имя и фамилия" data-tr="Ad Soyad">Full Name</label>
+            <input type="text" id="prof-name" placeholder="Your name">
+          </div>
+          <div class="acc-field">
+            <label data-en="Email" data-ru="Электронная почта" data-tr="E-posta">Email</label>
+            <input type="email" id="prof-email" readonly>
+          </div>
+          <div class="acc-field">
+            <label data-en="Occupation" data-ru="Род занятий" data-tr="Meslek">Occupation</label>
+            <select id="prof-occ">
+              <option value="">— Select —</option>
+              <option value="student" data-en="Student" data-ru="Студент" data-tr="Öğrenci">Student</option>
+              <option value="researcher">Researcher</option>
+              <option value="teacher">Teacher</option>
+              <option value="writer">Writer</option>
+              <option value="other">Other</option>
+            </select>
+          </div>
+          <button class="acc-save-btn" onclick="saveProfile()" data-en="Save changes" data-ru="Сохранить" data-tr="Kaydet">Save changes</button>
+        </div>
+        <div class="acc-card">
+          <div class="acc-card-title" data-en="Preferences" data-ru="Настройки" data-tr="Tercihler">Preferences</div>
+          <div class="acc-toggle-row">
+            <div>
+              <div class="acc-toggle-label" data-en="Auto-humanize on detection" data-ru="Авто-гуманизация при обнаружении" data-tr="Tespitte otomatik insanlaştır">Auto-humanize on detection</div>
+              <div class="acc-toggle-desc" data-en="Automatically suggest humanized version after scan." data-ru="Автоматически предлагать гуманизированную версию после проверки." data-tr="Taramadan sonra otomatik olarak insanlaştırılmış versiyonu öner.">Automatically suggest humanized version after scan.</div>
+            </div>
+            <label class="acc-toggle"><input type="checkbox" id="pref-autohuman" checked><span class="acc-toggle-slider"></span></label>
+          </div>
+          <div class="acc-toggle-row">
+            <div>
+              <div class="acc-toggle-label" data-en="Save scan history" data-ru="Сохранять историю проверок" data-tr="Tarama geçmişini kaydet">Save scan history</div>
+              <div class="acc-toggle-desc" data-en="Store a record of each scan in your account." data-ru="Сохранять запись каждой проверки в аккаунте." data-tr="Her taramanın kaydını hesabınızda saklayın.">Store a record of each scan in your account.</div>
+            </div>
+            <label class="acc-toggle"><input type="checkbox" id="pref-history" checked><span class="acc-toggle-slider"></span></label>
+          </div>
+          <div class="acc-toggle-row">
+            <div>
+              <div class="acc-toggle-label" data-en="Compact result view" data-ru="Компактный вид результатов" data-tr="Kompakt sonuç görünümü">Compact result view</div>
+              <div class="acc-toggle-desc" data-en="Show a shorter score card after each scan." data-ru="Показывать сокращённую карточку результата." data-tr="Her taramadan sonra daha kısa bir puan kartı göster.">Show a shorter score card after each scan.</div>
+            </div>
+            <label class="acc-toggle"><input type="checkbox" id="pref-compact"><span class="acc-toggle-slider"></span></label>
+          </div>
+        </div>
+      </div>
+
+      <!-- SECURITY TAB -->
+      <div class="acc-tab" id="acc-tab-security">
+        <div class="acc-section-title" data-en="Security" data-ru="Безопасность" data-tr="Güvenlik">Security</div>
+        <div class="acc-section-sub" data-en="Keep your account safe." data-ru="Держите аккаунт в безопасности." data-tr="Hesabınızı güvende tutun.">Keep your account safe.</div>
+        <div class="acc-card">
+          <div class="acc-card-title" data-en="Change Password" data-ru="Изменить пароль" data-tr="Şifre Değiştir">Change Password</div>
+          <div class="acc-field">
+            <label data-en="Current password" data-ru="Текущий пароль" data-tr="Mevcut şifre">Current password</label>
+            <input type="password" id="sec-old" placeholder="••••••••">
+          </div>
+          <div class="acc-field">
+            <label data-en="New password" data-ru="Новый пароль" data-tr="Yeni şifre">New password</label>
+            <input type="password" id="sec-new" placeholder="Min 6 characters">
+          </div>
+          <div class="acc-field">
+            <label data-en="Confirm new password" data-ru="Подтвердить новый пароль" data-tr="Yeni şifrenizi onaylayın">Confirm new password</label>
+            <input type="password" id="sec-confirm" placeholder="Repeat new password">
+          </div>
+          <button class="acc-save-btn" onclick="changePassword()" data-en="Update password" data-ru="Обновить пароль" data-tr="Şifreyi güncelle">Update password</button>
+        </div>
+        <div class="acc-card">
+          <div class="acc-card-title" data-en="Sessions & Activity" data-ru="Сессии и активность" data-tr="Oturumlar & Aktivite">Sessions & Activity</div>
+          <div class="acc-toggle-row">
+            <div>
+              <div class="acc-toggle-label" data-en="Login alerts via email" data-ru="Уведомления о входе на почту" data-tr="E-posta yoluyla oturum açma uyarıları">Login alerts via email</div>
+              <div class="acc-toggle-desc" data-en="Get notified when a new device signs in." data-ru="Получать уведомление при входе с нового устройства." data-tr="Yeni bir cihaz oturum açtığında bildirim alın.">Get notified when a new device signs in.</div>
+            </div>
+            <label class="acc-toggle"><input type="checkbox" id="sec-alert" checked><span class="acc-toggle-slider"></span></label>
+          </div>
+        </div>
+        <div class="acc-danger-zone">
+          <div class="acc-danger-title" data-en="⚠ Danger Zone" data-ru="⚠ Опасная зона" data-tr="⚠ Tehlikeli Alan">⚠ Danger Zone</div>
+          <div class="acc-danger-desc" data-en="Deleting your account is permanent and cannot be undone. All data, history, and credits will be removed." data-ru="Удаление аккаунта необратимо. Все данные, история и баланс будут удалены." data-tr="Hesabınızı silmek kalıcıdır ve geri alınamaz. Tüm veriler, geçmiş ve krediler kaldırılacaktır.">Deleting your account is permanent and cannot be undone. All data, history, and credits will be removed.</div>
+          <button class="acc-save-btn danger" onclick="alert('Account deletion coming soon.')" data-en="Delete my account" data-ru="Удалить аккаунт" data-tr="Hesabımı sil">Delete my account</button>
+        </div>
+      </div>
+
+      <!-- NOTIFICATIONS TAB -->
+      <div class="acc-tab" id="acc-tab-notifications">
+        <div class="acc-section-title" data-en="Notifications" data-ru="Уведомления" data-tr="Bildirimler">Notifications</div>
+        <div class="acc-section-sub" data-en="Control what emails you receive from us." data-ru="Управляйте получаемыми письмами." data-tr="Bizden aldığınız e-postaları kontrol edin.">Control what emails you receive from us.</div>
+        <div class="acc-card">
+          <div class="acc-card-title" data-en="Email Preferences" data-ru="Email-предпочтения" data-tr="E-posta Tercihleri">Email Preferences</div>
+          <div class="acc-toggle-row">
+            <div>
+              <div class="acc-toggle-label" data-en="Product updates" data-ru="Обновления продукта" data-tr="Ürün güncellemeleri">Product updates</div>
+              <div class="acc-toggle-desc" data-en="News about new features and improvements." data-ru="Новости о новых функциях и улучшениях." data-tr="Yeni özellikler ve iyileştirmeler hakkında haberler.">News about new features and improvements.</div>
+            </div>
+            <label class="acc-toggle"><input type="checkbox" checked><span class="acc-toggle-slider"></span></label>
+          </div>
+          <div class="acc-toggle-row">
+            <div>
+              <div class="acc-toggle-label" data-en="Usage reports" data-ru="Отчёты об использовании" data-tr="Kullanım raporları">Usage reports</div>
+              <div class="acc-toggle-desc" data-en="Weekly summary of your scans and activity." data-ru="Еженедельная сводка проверок и активности." data-tr="Taramalarınızın ve aktivitenizin haftalık özeti.">Weekly summary of your scans and activity.</div>
+            </div>
+            <label class="acc-toggle"><input type="checkbox"><span class="acc-toggle-slider"></span></label>
+          </div>
+          <div class="acc-toggle-row">
+            <div>
+              <div class="acc-toggle-label" data-en="Billing reminders" data-ru="Напоминания об оплате" data-tr="Fatura hatırlatıcıları">Billing reminders</div>
+              <div class="acc-toggle-desc" data-en="Alerts before your subscription renews." data-ru="Уведомления перед обновлением подписки." data-tr="Aboneliğiniz yenilenmeden önce uyarılar.">Alerts before your subscription renews.</div>
+            </div>
+            <label class="acc-toggle"><input type="checkbox" checked><span class="acc-toggle-slider"></span></label>
+          </div>
+          <div class="acc-toggle-row">
+            <div>
+              <div class="acc-toggle-label" data-en="Special offers" data-ru="Спецпредложения" data-tr="Özel teklifler">Special offers</div>
+              <div class="acc-toggle-desc" data-en="Discounts and promotions." data-ru="Скидки и акции." data-tr="İndirimler ve promosyonlar.">Discounts and promotions.</div>
+            </div>
+            <label class="acc-toggle"><input type="checkbox"><span class="acc-toggle-slider"></span></label>
+          </div>
+          <div style="margin-top:20px"><button class="acc-save-btn" data-en="Save preferences" data-ru="Сохранить" data-tr="Kaydet">Save preferences</button></div>
+        </div>
+      </div>
+
+      <!-- PLAN TAB -->
+      <div class="acc-tab" id="acc-tab-plan">
+        <div class="acc-section-title" data-en="Plan & Billing" data-ru="Тариф и оплата" data-tr="Plan & Ödeme">Plan & Billing</div>
+        <div class="acc-section-sub" data-en="Manage your subscription." data-ru="Управляйте подпиской." data-tr="Aboneliğinizi yönetin.">Manage your subscription.</div>
+        <div class="acc-card">
+          <div class="acc-card-title" data-en="Current Plan" data-ru="Текущий план" data-tr="Mevcut Plan">Current Plan</div>
+          <div class="acc-plan-card active">
+            <div>
+              <div class="acc-plan-name" data-en="Free Plan" data-ru="Бесплатный план" data-tr="Ücretsiz Plan">Free Plan</div>
+              <div class="acc-plan-price" data-en="500 words/month · Basic detection" data-ru="500 слов/мес · Базовое обнаружение" data-tr="500 kelime/ay · Temel tespit">500 words/month · Basic detection</div>
+            </div>
+            <span class="acc-plan-badge" data-en="Active" data-ru="Активен" data-tr="Aktif">Active</span>
+          </div>
+        </div>
+        <div class="acc-card">
+          <div class="acc-card-title" data-en="Upgrade Your Plan" data-ru="Повысить план" data-tr="Planınızı Yükseltin">Upgrade Your Plan</div>
+          <div class="acc-plan-card" onclick="openModal('signup')">
+            <div>
+              <div class="acc-plan-name">Starter</div>
+              <div class="acc-plan-price" data-en="$2 trial → $19.99/mo · 50 detections" data-ru="$2 пробный → $19.99/мес · 50 проверок" data-tr="$2 deneme → $19.99/ay · 50 tespit">$2 trial → $19.99/mo · 50 detections</div>
+            </div>
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M6 3l5 5-5 5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </div>
+          <div class="acc-plan-card" onclick="openModal('signup')" style="border-color:var(--accent);background:#fff8f6">
+            <div>
+              <div class="acc-plan-name" style="color:var(--accent)">Monthly <span style="font-size:12px;background:var(--accent);color:#fff;padding:2px 8px;border-radius:100px;font-weight:700;margin-left:6px">Popular</span></div>
+              <div class="acc-plan-price" data-en="$9.99/mo · Unlimited · Advanced humanizer" data-ru="$9.99/мес · Безлимит · Расширенный гуманизатор" data-tr="$9.99/ay · Sınırsız · Gelişmiş insanlaştırıcı">$9.99/mo · Unlimited · Advanced humanizer</div>
+            </div>
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M6 3l5 5-5 5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </div>
+          <div class="acc-plan-card" onclick="openModal('signup')">
+            <div>
+              <div class="acc-plan-name">Annual</div>
+              <div class="acc-plan-price" data-en="$4.99/mo billed annually · Best value" data-ru="$4.99/мес, оплата ежегодно · Лучшая цена" data-tr="$4.99/ay yıllık faturalama · En iyi değer">$4.99/mo billed annually · Best value</div>
+            </div>
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M6 3l5 5-5 5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </div>
+        </div>
+        <div class="acc-card">
+          <div class="acc-card-title" data-en="Billing Info" data-ru="Платёжные данные" data-tr="Fatura Bilgileri">Billing Info</div>
+          <div style="font-size:14px;color:var(--muted);padding:20px;text-align:center;background:var(--paper);border-radius:12px" data-en="No payment method on file. Upgrade to add one." data-ru="Способ оплаты не привязан. Обновите план для добавления." data-tr="Kayıtlı ödeme yöntemi yok. Eklemek için yükseltin.">No payment method on file. Upgrade to add one.</div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<footer>
+  <div class="footer-top">
+    <!-- BRAND COL -->
+    <div>
+      <div class="footer-logo">Vex<span style="color:var(--accent)">.</span>AI</div>
+      <p class="footer-desc" data-en="The sharpest way to detect and humanize AI text before you submit anything important. Trusted by students and researchers in 40+ countries." data-ru="Самый точный способ обнаружить и гуманизировать AI-текст перед сдачей. Используется студентами и исследователями в 40+ странах." data-tr="Önemli bir şey göndermeden önce AI metnini tespit etmenin ve insanlaştırmanın en keskin yolu. 40'tan fazla ülkede öğrenci ve araştırmacılar tarafından güvenilmektedir.">The sharpest way to detect and humanize AI text before you submit anything important. Trusted by students and researchers in 40+ countries.</p>
+      <div style="margin-top:20px;font-size:12px;color:var(--muted);line-height:1.8">
+        <div style="display:flex;align-items:center;gap:7px;margin-bottom:4px">
+          <svg width="13" height="13" viewBox="0 0 13 13" fill="none"><rect x="1" y="1" width="11" height="11" rx="2" stroke="currentColor" stroke-width="1.3"/><path d="M1 5h11" stroke="currentColor" stroke-width="1.3"/><path d="M5 5v6" stroke="currentColor" stroke-width="1.3"/></svg>
+          <span data-en="Servers: EU-West (Frankfurt) · US-East (Virginia)" data-ru="Серверы: EU-West (Франкфурт) · US-East (Вирджиния)" data-tr="Sunucular: EU-West (Frankfurt) · US-East (Virginia)">Servers: EU-West (Frankfurt) · US-East (Virginia)</span>
+        </div>
+        <div style="display:flex;align-items:center;gap:7px;margin-bottom:4px">
+          <svg width="13" height="13" viewBox="0 0 13 13" fill="none"><path d="M1.5 3.5h10a.5.5 0 0 1 .5.5v5a.5.5 0 0 1-.5.5h-10A.5.5 0 0 1 1 9V4a.5.5 0 0 1 .5-.5Z" stroke="currentColor" stroke-width="1.3"/><path d="M1.5 4l5 3.5L11.5 4" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>
+          <span>support@vex-ai.io</span>
+        </div>
+        <div style="display:flex;align-items:center;gap:7px">
+          <svg width="13" height="13" viewBox="0 0 13 13" fill="none"><circle cx="6.5" cy="6.5" r="5.5" stroke="currentColor" stroke-width="1.3"/><path d="M6.5 1a7.5 7.5 0 0 1 0 11M6.5 1a7.5 7.5 0 0 0 0 11M1 6.5h11" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/></svg>
+          <span data-en="ISO 27001 certified data centers" data-ru="Сертифицированные по ISO 27001 дата-центры" data-tr="ISO 27001 sertifikalı veri merkezleri">ISO 27001 certified data centers</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- PRODUCT COL -->
+    <div class="footer-col">
+      <h4 data-en="Product" data-ru="Продукт" data-tr="Ürün">Product</h4>
+      <a onclick="show('home')" data-en="AI Detector" data-ru="AI Детектор" data-tr="AI Dedektörü">AI Detector</a>
+      <a onclick="show('human')" data-en="AI Humanizer" data-ru="AI Гуманизатор" data-tr="AI İnsanlaştırıcı">AI Humanizer</a>
+      <a onclick="show('checker')" data-en="Plagiarism Check" data-ru="Проверка плагиата" data-tr="İntihal Kontrolü">Plagiarism Check</a>
+      <a onclick="show('pricing')" data-en="Pricing" data-ru="Цены" data-tr="Fiyatlar">Pricing</a>
+      <a onclick="show('faq')" data-en="FAQ" data-ru="FAQ" data-tr="SSS">FAQ</a>
+    </div>
+
+    <!-- LEGAL COL -->
+    <div class="footer-col">
+      <h4 data-en="Legal" data-ru="Правовая" data-tr="Yasal">Legal</h4>
+      <a href="#" data-en="Privacy Policy" data-ru="Конфиденциальность" data-tr="Gizlilik Politikası">Privacy Policy</a>
+      <a href="#" data-en="Terms of Use" data-ru="Условия использования" data-tr="Kullanım Koşulları">Terms of Use</a>
+      <a href="#" data-en="Cookie Policy" data-ru="Политика cookies" data-tr="Çerez Politikası">Cookie Policy</a>
+      <a href="#" data-en="GDPR" data-ru="GDPR" data-tr="GDPR">GDPR</a>
+    </div>
+
+    <!-- SUPPORT COL -->
+    <div class="footer-col">
+      <h4 data-en="Support" data-ru="Поддержка" data-tr="Destek">Support</h4>
+      <a href="mailto:support@vex-ai.io" data-en="Contact Us" data-ru="Написать нам" data-tr="Bize Ulaşın">Contact Us</a>
+      <a href="mailto:support@vex-ai.io">support@vex-ai.io</a>
+      <a onclick="show('faq')" data-en="Help Center" data-ru="Центр помощи" data-tr="Yardım Merkezi">Help Center</a>
+      <a href="#" data-en="Report a bug" data-ru="Сообщить об ошибке" data-tr="Hata bildir">Report a bug</a>
+      <div style="margin-top:16px;font-size:11px;color:var(--muted);line-height:1.6">
+        <span data-en="Response time: under 24h" data-ru="Ответ: до 24 часов" data-tr="Yanıt süresi: 24 saat altı">Response time: under 24h</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- BOTTOM BAR -->
+  <div style="border-top:1px solid var(--border);padding-top:24px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px">
+    <div style="display:flex;flex-direction:column;gap:4px">
+      <span style="font-size:13px;color:var(--muted)">© 2026 Vex.AI — All rights reserved.</span>
+      <span style="font-size:11px;color:var(--muted);opacity:.6" data-en="Know what's real." data-ru="Знай, что реально." data-tr="Gerçeği bil.">Know what's real.</span>
+    </div>
+  </div>
+</footer>
+<div class="rainbow-line"></div>
+
+<!-- MODAL -->
+<div id="modal">
+  <div class="modal-box">
+    <button class="modal-close" onclick="closeModal()">×</button>
+    <div class="modal-title" id="mtitle">Create account</div>
+    <div class="modal-sub" id="msub">Start detecting AI text — free forever</div>
+    <div class="modal-err" id="merr"></div>
+
+    <button class="google-btn" onclick="signInGoogle()">
+      <svg viewBox="0 0 24 24" width="18" height="18"><path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/><path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/><path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/><path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/></svg>
+      <span id="google-btn-text">Continue with Google</span>
+    </button>
+    <div class="modal-divider" id="mdivider">or</div>
+
+    <!-- SIGNUP поля (имя + email + пароль) -->
+    <div id="signup-fields">
+      <input class="modal-input" id="aname" type="text"
+        placeholder="Your name"
+        data-en-ph="Your name"
+        data-ru-ph="Ваше имя"
+        data-tr-ph="Adınız">
+      <input class="modal-input" id="aemail" type="email"
+        placeholder="Email address"
+        data-en-ph="Email address"
+        data-ru-ph="Электронная почта"
+        data-tr-ph="E-posta adresi">
+      <input class="modal-input" id="apass" type="password"
+        placeholder="Password (min 6 chars)"
+        data-en-ph="Password (min 6 chars)"
+        data-ru-ph="Пароль (минимум 6 символов)"
+        data-tr-ph="Şifre (en az 6 karakter)">
+    </div>
+
+    <!-- LOGIN поля (только email + пароль) -->
+    <div id="login-fields" style="display:none">
+      <input class="modal-input" id="lemail" type="email"
+        placeholder="Email address"
+        data-en-ph="Email address"
+        data-ru-ph="Электронная почта"
+        data-tr-ph="E-posta adresi">
+      <input class="modal-input" id="lpass" type="password"
+        placeholder="Password"
+        data-en-ph="Password"
+        data-ru-ph="Пароль"
+        data-tr-ph="Şifre">
+    </div>
+
+    <button class="modal-btn" id="mbtn" onclick="submitAuth()">Sign up free</button>
+    <div class="modal-switch" id="mswitch">Already have an account? <a onclick="openModal('login')">Sign in</a></div>
+  </div>
+</div>
+
+<script>
+const SUPABASE_URL='https://bofksfkxowuzaardykgc.supabase.co';
+const SUPABASE_ANON_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJvZmtzZmt4b3d1emFhcmR5a2djIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzczOTYwNjcsImV4cCI6MjA5Mjk3MjA2N30.SMAH0vALQLHHV66S2iwLGo8B4tyA5m2bBFj_oGaizjU';
+const sb=window.supabase.createClient(SUPABASE_URL,SUPABASE_ANON_KEY);
+let currentUser=null,currentLang='en';
+
+sb.auth.onAuthStateChange(async(event,session)=>{
+  currentUser=session?.user??null;
+  if(currentUser){await ensureUserProfile(currentUser);renderLoggedIn(currentUser);closeModal();}
+  else renderLoggedOut();
+});
+
+async function ensureUserProfile(user){
+  try{
+    const{data}=await sb.from('Users').select('id').eq('id',user.id).maybeSingle();
+    if(!data){
+      const name=user.user_metadata?.full_name||user.user_metadata?.name||'';
+      await sb.from('Users').insert({id:user.id,email:user.email,full_name:name,is_premium:false,words_balance:500});
+    }
+  }catch(e){console.warn('ensureUserProfile:',e.message);}
+}
+
+function renderLoggedIn(user){
+  const email=user.email||'';
+  const name=user.user_metadata?.full_name||user.user_metadata?.name||email.split('@')[0];
+  const initial=name[0]?.toUpperCase()||'?';
+  // Шапка: показываем имя
+  document.getElementById('nav-auth-area').innerHTML=`
+    <span style="font-size:13px;background:var(--paper);border:1px solid var(--border);padding:7px 14px;border-radius:9px;font-weight:500;color:var(--muted);max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;display:inline-block" title="${email}">👋 ${name}</span>
+    <button class="btn-try" onclick="show('account')" data-en="My Account" data-ru="Аккаунт" data-tr="Hesabım" data-es="Mi cuenta">My Account</button>`;
+  // Страница аккаунта
+  const av=document.getElementById('acc-avatar');if(av)av.textContent=initial;
+  const em=document.getElementById('acc-email');if(em)em.textContent=email;
+  const nm=document.getElementById('acc-name');if(nm)nm.textContent=name;
+  loadUserProfile(user.id);loadHistory(user.id);
+}
+
+function renderLoggedOut(){
+  document.getElementById('nav-auth-area').innerHTML=`
+    <button class="btn-signin" onclick="openModal('login')" data-en="Sign in" data-ru="Войти" data-tr="Giriş">Sign in</button>
+    <button class="btn-try" onclick="openModal('signup')" data-en="Try free →" data-ru="Попробовать →" data-tr="Ücretsiz →">Try free →</button>`;
+}
+
+
+
+async function loadHistory(userId){
+  try{
+    const{data}=await sb.from('History').select('*').eq('user_id',userId).order('created_at',{ascending:false}).limit(50);
+    const makeItems=(items,limit)=>{
+      if(!items||!items.length)return'<div class="history-empty">No scans yet. Run your first detection above.</div>';
+      return items.slice(0,limit).map(i=>{
+        const d=new Date(i.created_at).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'});
+        const p=(i.original_text||'').substring(0,120)+'…';
+        return`<div class="history-item"><div class="history-meta"><span class="history-action ${i.action}">${i.action}</span><span class="history-date">${d}</span></div><div class="history-preview">${p}</div></div>`;
+      }).join('');
+    };
+    // Full history tab
+    const c=document.getElementById('history-list');if(c)c.innerHTML=makeItems(data,50);
+    // Overview tab — last 3
+    const ov=document.getElementById('history-list-overview');if(ov)ov.innerHTML=makeItems(data,3);
+    // Stats
+    if(data){
+      const scans=(data.filter(i=>i.action==='detect')).length;
+      const hums=(data.filter(i=>i.action==='humanize')).length;
+      const ss=document.getElementById('stat-scans');if(ss)ss.textContent=scans;
+      const sh=document.getElementById('stat-humanized');if(sh)sh.textContent=hums;
+    }
+  }catch(e){console.warn('loadHistory:',e.message);}
+}
+
+async function saveHistory(text,action){if(!currentUser)return;try{await sb.from('History').insert({user_id:currentUser.id,original_text:text,action});}catch(e){}}
+
+// ---- ACCOUNT TABS ----
+function switchAccTab(tab){
+  document.querySelectorAll('.acc-tab').forEach(t=>t.classList.remove('act'));
+  document.querySelectorAll('.acc-nav-item').forEach(n=>n.classList.remove('act'));
+  const t=document.getElementById('acc-tab-'+tab);if(t)t.classList.add('act');
+  const n=document.getElementById('acc-nav-'+tab);if(n)n.classList.add('act');
+}
+
+function saveProfile(){
+  if(!currentUser)return;
+  const name=document.getElementById('prof-name')?.value.trim();
+  if(!name)return;
+  sb.from('Users').update({full_name:name}).eq('id',currentUser.id).then(()=>{
+    const nm=document.getElementById('acc-name');if(nm)nm.textContent=name;
+    const av=document.getElementById('acc-avatar');if(av)av.textContent=name[0].toUpperCase();
+    alert('Profile saved!');
+  }).catch(e=>console.warn(e));
+}
+
+async function changePassword(){
+  const np=document.getElementById('sec-new')?.value;
+  const cp=document.getElementById('sec-confirm')?.value;
+  if(!np||np.length<6){alert('Password must be at least 6 characters.');return;}
+  if(np!==cp){alert('Passwords do not match.');return;}
+  const{error}=await sb.auth.updateUser({password:np});
+  if(error)alert('Error: '+error.message);
+  else alert('Password updated successfully!');
+}
+
+// Pre-fill profile fields when opening profile tab
+function switchAccTabWithPrefill(tab){
+  switchAccTab(tab);
+  if(tab==='profile'&&currentUser){
+    const ef=document.getElementById('prof-email');if(ef)ef.value=currentUser.email||'';
+    const nf=document.getElementById('prof-name');
+    if(nf)nf.value=currentUser.user_metadata?.full_name||currentUser.user_metadata?.name||document.getElementById('acc-name')?.textContent||'';
+  }
+}
+
+// Also update acc-words2 when profile loads
+async function loadUserProfile(userId){
+  try{
+    const{data}=await sb.from('Users').select('is_premium,words_balance,full_name').eq('id',userId).single();
+    if(data){
+      const p=document.getElementById('acc-plan');
+      if(p){p.textContent=data.is_premium?'Premium':'Free';p.className='plan-badge'+(data.is_premium?' premium':'');}
+      const w=document.getElementById('acc-words');if(w)w.textContent=(data.words_balance??500).toLocaleString();
+      const w2=document.getElementById('acc-words2');if(w2)w2.textContent=(data.words_balance??500).toLocaleString();
+      const nm=document.getElementById('acc-name');if(nm&&data.full_name)nm.textContent=data.full_name;
+    }
+  }catch(e){console.warn('loadUserProfile:',e.message);}
+}
+
+let authMode='signup';
+const modalTexts={
+  signup:{
+    en:['Create account','Free forever — no credit card needed','Create account'],
+    ru:['Создать аккаунт','Бесплатно навсегда — карта не нужна','Зарегистрироваться'],
+    tr:['Hesap oluştur','Sonsuza kadar ücretsiz — kredi kartı gerekmez','Hesap oluştur'],
+    es:['Crear cuenta','Gratis para siempre — sin tarjeta de crédito','Crear cuenta']
+  },
+  login:{
+    en:['Welcome back','Sign in to your account','Sign in'],
+    ru:['С возвращением','Войдите в аккаунт','Войти'],
+    tr:['Tekrar hoş geldiniz','Hesabınıza giriş yapın','Giriş yap'],
+    es:['Bienvenido de nuevo','Inicia sesión en tu cuenta','Iniciar sesión']
+  }
+};
+const switchTexts={
+  en:{signup:'Already have an account? <a onclick="openModal(\'login\')">Sign in</a>',login:'No account? <a onclick="openModal(\'signup\')">Sign up free</a>'},
+  ru:{signup:'Уже есть аккаунт? <a onclick="openModal(\'login\')">Войти</a>',login:'Нет аккаунта? <a onclick="openModal(\'signup\')">Зарегистрироваться</a>'},
+  tr:{signup:'Hesabınız var mı? <a onclick="openModal(\'login\')">Giriş yapın</a>',login:'Hesabınız yok mu? <a onclick="openModal(\'signup\')">Ücretsiz kayıt olun</a>'},
+  es:{signup:'¿Ya tienes cuenta? <a onclick="openModal(\'login\')">Iniciar sesión</a>',login:'¿Sin cuenta? <a onclick="openModal(\'signup\')">Regístrate gratis</a>'}
+};
+const googleBtnText={
+  signup:{en:'Sign up with Google',ru:'Войти через Google',tr:'Google ile kayıt ol',es:'Registrarse con Google'},
+  login:{en:'Continue with Google',ru:'Продолжить через Google',tr:'Google ile devam et',es:'Continuar con Google'}
+};
+
+function openModal(m){
+  authMode=m;
+  document.getElementById('modal').classList.add('open');
+  const t=modalTexts[m][currentLang];
+  document.getElementById('mtitle').textContent=t[0];
+  document.getElementById('msub').textContent=t[1];
+  document.getElementById('mbtn').textContent=t[2];
+  document.getElementById('mbtn').disabled=false;
+  document.getElementById('mswitch').innerHTML=switchTexts[currentLang][m];
+  document.getElementById('merr').textContent='';
+  // Google кнопка
+  const gb=document.getElementById('google-btn-text');if(gb)gb.textContent=googleBtnText[m][currentLang];
+  // Показываем нужные поля
+  const sf=document.getElementById('signup-fields');
+  const lf=document.getElementById('login-fields');
+  if(m==='signup'){sf.style.display='block';lf.style.display='none';}
+  else{sf.style.display='none';lf.style.display='block';}
+  // Очищаем поля
+  ['aname','aemail','apass','lemail','lpass'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
+}
+
+function closeModal(){document.getElementById('modal').classList.remove('open');}
+document.getElementById('modal').addEventListener('click',function(e){if(e.target===this)closeModal();});
+
+async function submitAuth(){
+  const btn=document.getElementById('mbtn');
+  const err=document.getElementById('merr');
+  const lang=currentLang;
+
+  const msgs={
+    en:{fields:'Please fill in all fields.',nameShort:'Name must be at least 2 characters.',short:'Password must be at least 6 characters.',ok_confirm:'✓ Check your inbox to confirm your email!',ok_in:'Check your inbox',ok_login:'Signed in!'},
+    ru:{fields:'Заполните все поля.',nameShort:'Имя должно быть не менее 2 символов.',short:'Пароль минимум 6 символов.',ok_confirm:'✓ Проверьте почту для подтверждения!',ok_in:'Проверьте почту',ok_login:'Вход выполнен!'},
+    tr:{fields:'Tüm alanları doldurun.',nameShort:'Ad en az 2 karakter olmalıdır.',short:'Şifre en az 6 karakter olmalıdır.',ok_confirm:'✓ E-postanızı onaylayın!',ok_in:'Gelen kutunuzu kontrol edin',ok_login:'Giriş yapıldı!'}
+  };
+
+  err.style.color='var(--accent)';
+  err.textContent='';
+
+  // Предупреждение если открыт как file:// — Supabase заблокирует CORS
+  if(window.location.protocol==='file:'){
+    err.textContent={
+      en:'⚠️ Open via server, not file://. Try Live Server or upload to hosting.',
+      ru:'⚠️ Открывайте через сервер, не file://. Используйте Live Server или хостинг.',
+      tr:'⚠️ Dosyayı file:// ile değil sunucu üzerinden açın.'
+    }[lang];
+    return;
+  }
+
+  // Таймаут 10 секунд — кнопка не зависнет никогда
+  function withTimeout(promise, ms){
+    return Promise.race([promise, new Promise((_,reject)=>setTimeout(()=>reject(new Error({en:'Request timed out. Check your connection.',ru:'Превышено время ожидания. Проверьте соединение.',tr:'İstek zaman aşımına uğradı.'}[lang])),ms))]);
+  }
+
+  if(authMode==='signup'){
+    const name=document.getElementById('aname').value.trim();
+    const email=document.getElementById('aemail').value.trim();
+    const pass=document.getElementById('apass').value;
+    if(!name||!email||!pass){err.textContent=msgs[lang].fields;return;}
+    if(name.length<2){err.textContent=msgs[lang].nameShort;return;}
+    if(pass.length<6){err.textContent=msgs[lang].short;return;}
+
+    btn.disabled=true;btn.textContent='…';
+    try{
+      const{data,error}=await withTimeout(
+        sb.auth.signUp({email,password:pass,options:{data:{full_name:name}}}),
+        10000
+      );
+      if(error){err.textContent=error.message;btn.disabled=false;btn.textContent=modalTexts.signup[lang][2];}
+      else if(!data.session){
+        err.style.color='#00c46a';
+        err.textContent=msgs[lang].ok_confirm;
+        btn.textContent=msgs[lang].ok_in;
+        // кнопку не разблокируем — пусть идут в почту
+      } else {
+        btn.disabled=false;btn.textContent=modalTexts.signup[lang][2];
+        // onAuthStateChange закроет модал
+      }
+    }catch(e){
+      err.textContent=e.message;
+      btn.disabled=false;btn.textContent=modalTexts.signup[lang][2];
+    }
+
+  }else{
+    const email=document.getElementById('lemail').value.trim();
+    const pass=document.getElementById('lpass').value;
+    if(!email||!pass){err.textContent=msgs[lang].fields;return;}
+    if(pass.length<6){err.textContent=msgs[lang].short;return;}
+
+    btn.disabled=true;btn.textContent='…';
+    try{
+      const{error}=await withTimeout(
+        sb.auth.signInWithPassword({email,password:pass}),
+        10000
+      );
+      if(error){err.textContent=error.message;}
+      // Успех — onAuthStateChange закроет модал
+    }catch(e){
+      err.textContent=e.message;
+    }
+    btn.disabled=false;btn.textContent=modalTexts.login[lang][2];
+  }
+}
+
+async function signInGoogle(){
+  const{error}=await sb.auth.signInWithOAuth({provider:'google',options:{redirectTo:window.location.origin+window.location.pathname,queryParams:{access_type:'offline',prompt:'consent'}}});
+  if(error){const err=document.getElementById('merr');if(err){err.style.color='var(--accent)';err.textContent=error.message;}}
+}
+async function doLogout(){await sb.auth.signOut();show('home');}
+
+function show(p){
+  document.querySelectorAll('.page').forEach(el=>el.classList.remove('act'));
+  document.getElementById(p).classList.add('act');
+  document.querySelectorAll('.nav-links a').forEach(a=>a.classList.remove('act'));
+  const l=document.getElementById('l-'+p);if(l)l.classList.add('act');
+  window.scrollTo(0,0);setTimeout(checkReveal,100);
+}
+
+function toggleLangDropdown(e){
+  e.stopPropagation();
+  const dd=document.getElementById('langDropdown');
+  const ch=document.getElementById('langChevron');
+  const open=dd.classList.contains('open');
+  dd.classList.toggle('open',!open);
+  ch.style.transform=open?'':'rotate(180deg)';
+}
+
+function selectLang(code,flag,label){
+  currentLang=code;
+  // Update button
+  document.getElementById('langFlag').textContent=flag;
+  document.getElementById('langCode').textContent=label;
+  // Update dropdown active state
+  document.querySelectorAll('.lang-option').forEach(o=>o.classList.remove('act'));
+  const chosen=document.querySelector(`.lang-option[onclick*="'${code}'"]`);
+  if(chosen)chosen.classList.add('act');
+  // Update mobile active
+  document.querySelectorAll('.mobile-lang-option').forEach(o=>o.classList.remove('act'));
+  const mob=document.getElementById('mlo-'+code);
+  if(mob)mob.classList.add('act');
+  // Close dropdown
+  document.getElementById('langDropdown').classList.remove('open');
+  document.getElementById('langChevron').style.transform='';
+  applyLang(code);
+  // Update modal if open
+  if(typeof authMode!=='undefined'){
+    const t=modalTexts[authMode]?.[code];
+    if(t){
+      const mt=document.getElementById('mtitle');if(mt)mt.textContent=t[0];
+      const ms=document.getElementById('msub');if(ms)ms.textContent=t[1];
+      const mb=document.getElementById('mbtn');if(mb)mb.textContent=t[2];
+    }
+    const sw=document.getElementById('mswitch');
+    if(sw&&switchTexts[code])sw.innerHTML=switchTexts[code][authMode];
+    const gb=document.getElementById('google-btn-text');
+    if(gb&&googleBtnText[authMode])gb.textContent=googleBtnText[authMode][code]||googleBtnText[authMode]['en'];
+  }
+}
+
+// Close dropdown on outside click
+document.addEventListener('click',e=>{
+  if(!document.getElementById('langDropdownWrap')?.contains(e.target)){
+    document.getElementById('langDropdown')?.classList.remove('open');
+    if(document.getElementById('langChevron'))document.getElementById('langChevron').style.transform='';
+  }
+});
+
+function setLang(e,l){selectLang(l,{en:'🇬🇧',ru:'🇷🇺',tr:'🇹🇷',es:'🇪🇸'}[l]||'🌐',l.toUpperCase());}
+function updateMobileLang(l){}
+
+function applyLang(l){
+  // Update all elements with data-[lang] attribute
+  document.querySelectorAll('[data-'+l+']').forEach(el=>{
+    const val=el.getAttribute('data-'+l);
+    if(el.tagName==='INPUT'||el.tagName==='TEXTAREA')return;
+    el.innerHTML=val;
+  });
+  // Update placeholders
+  document.querySelectorAll('[data-'+l+'-ph]').forEach(el=>{
+    el.placeholder=el.getAttribute('data-'+l+'-ph');
+  });
+  // Update modal switch text
+  if(typeof switchTexts!=='undefined'&&typeof authMode!=='undefined'){
+    const sw=document.getElementById('mswitch');
+    if(sw)sw.innerHTML=switchTexts[l][authMode];
+  }
+}
+
+function toggleFaq(el){
+  const a=el.querySelector('.faq-a'),plus=el.querySelector('.faq-plus'),open=a.style.display==='block';
+  a.style.display=open?'none':'block';
+  plus.textContent=open?'+':'−';
+  plus.style.transform=open?'rotate(0)':'rotate(45deg)';
+}
+
+function checkReveal(){
+  document.querySelectorAll('.reveal').forEach(el=>{
+    if(el.getBoundingClientRect().top<window.innerHeight-60)el.classList.add('visible');
+  });
+}
+window.addEventListener('scroll',checkReveal,{passive:true});
+setTimeout(checkReveal,200);
+
+window.addEventListener('scroll',()=>{
+  document.getElementById('navbar').classList.toggle('scrolled',window.scrollY>20);
+},{passive:true});
+
+document.addEventListener('mousemove',e=>{
+  const g=document.getElementById('cursorGlow');
+  g.style.left=e.clientX+'px';g.style.top=e.clientY+'px';
+});
+
+function pasteText(){navigator.clipboard.readText().then(t=>document.getElementById('txt').value=t).catch(()=>{});}
+
+// ============================================================
+// GEMINI AI — настоящий детектор и гуманизатор
+// ============================================================
+const GEMINI_KEY = 'AIzaSyCRw5tdL4u8N_PwJq2GPz-BtVS_7DkTRSc';
+const GEMINI_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${GEMINI_KEY}`;
+
+async function callGemini(prompt){
+  const body = JSON.stringify({
+    contents:[{parts:[{text:prompt}]}],
+    generationConfig:{temperature:0.2,maxOutputTokens:1024}
+  });
+
+  try{
+    const res = await fetch(GEMINI_URL,{method:'POST',headers:{'Content-Type':'application/json'},body});
+    const data = await res.json();
+    if(!res.ok){
+      const msg = data?.error?.message || res.status;
+      throw new Error('Gemini: '+msg);
+    }
+    const text = data.candidates?.[0]?.content?.parts?.[0]?.text;
+    if(!text) throw new Error('Empty response from Gemini');
+    return text;
+  }catch(e){
+    // CORS fallback via proxy
+    console.warn('Direct failed, trying proxy:', e.message);
+    const proxyUrl = 'https://corsproxy.io/?'+encodeURIComponent(GEMINI_URL);
+    const res2 = await fetch(proxyUrl,{method:'POST',headers:{'Content-Type':'application/json'},body});
+    const data2 = await res2.json();
+    if(!res2.ok){
+      const msg = data2?.error?.message || res2.status;
+      throw new Error('Gemini proxy: '+msg);
+    }
+    const text2 = data2.candidates?.[0]?.content?.parts?.[0]?.text;
+    if(!text2) throw new Error('Empty proxy response');
+    return text2;
+  }
+}
+
+// ---- DETECTOR ----
+async function check(){
+  const t = document.getElementById('txt').value.trim();
+  if(!t){ return; }
+  if(t.split(/\s+/).length < 20){
+    alert('Please enter at least 20 words for accurate detection.');
+    return;
+  }
+  document.getElementById('loading').style.display='block';
+  document.getElementById('result').style.display='none';
+
+  try{
+    const prompt = `You are an expert AI content detector. Analyze this text and determine the probability it was written by AI (like ChatGPT, Claude, Gemini).
+
+Text to analyze:
+"""
+${t.substring(0,3000)}
+"""
+
+Respond ONLY with valid JSON in this exact format (no markdown, no explanation):
+{
+  "score": <integer 0-100 representing % AI probability>,
+  "tags": [<array of 1-4 short detected pattern strings, e.g. "Formal transitions", "Repetitive structure", "AI phrasing", "Looks human-written">],
+  "verdict": "<one sentence explanation in ${currentLang === 'ru' ? 'Russian' : currentLang === 'tr' ? 'Turkish' : currentLang === 'es' ? 'Spanish' : 'English'}>"
+}`;
+
+    const raw = await callGemini(prompt);
+    const clean = raw.replace(/```json|```/g,'').trim();
+    const json = JSON.parse(clean);
+
+    const score = Math.max(0, Math.min(100, json.score));
+    const tags = json.tags || [];
+    const verdict = json.verdict || '';
+
+    document.getElementById('loading').style.display='none';
+    const sn = document.getElementById('snum');
+    sn.textContent = score+'%';
+    sn.style.color = score>65?'var(--accent)':score>35?'var(--yellow)':'var(--green)';
+    const bf = document.getElementById('bf');
+    bf.style.width = score+'%';
+    bf.style.background = score>65?'var(--accent)':score>35?'var(--yellow)':'var(--green)';
+
+    // Tags — color based on score
+    const tagColor = score>65?'bad':score>35?'warn':'good';
+    document.getElementById('tags').innerHTML = tags.map(t=>`<span class="tag ${tagColor}">${t}</span>`).join('');
+
+    // Show verdict if element exists
+    const vEl = document.getElementById('verdict');
+    if(vEl) vEl.textContent = verdict;
+
+    document.getElementById('result').style.display='block';
+    saveHistory(t,'detect');
+  } catch(e){
+    document.getElementById('loading').style.display='none';
+    console.error('Detection error:', e);
+    alert('Ошибка: ' + e.message);
+  }
+}
+
+// ---- HUMANIZER (main page) ----
+async function humanize(){
+  const t = document.getElementById('txt').value.trim();
+  if(!t) return;
+  const btn = document.querySelector('[onclick="humanize()"]');
+  if(btn){ btn.disabled=true; btn.textContent='Humanizing…'; }
+
+  try{
+    const result = await geminiHumanize(t);
+    document.getElementById('outP').textContent = result;
+    document.getElementById('outWrap').style.display='block';
+    saveHistory(t,'humanize');
+  } catch(e){
+    alert('Humanization failed. Please try again.');
+  }
+  if(btn){ btn.disabled=false; btn.innerHTML='✦ Humanize this text — remove AI signals'; }
+}
+
+// ---- HUMANIZER (humanizer page) ----
+async function doHuman(){
+  const t = document.getElementById('htxt').value.trim();
+  if(!t) return;
+  const btn = document.querySelector('[onclick="doHuman()"]');
+  if(btn){ btn.disabled=true; btn.textContent='Humanizing…'; }
+
+  try{
+    const result = await geminiHumanize(t);
+    document.getElementById('houtP').textContent = result;
+    document.getElementById('hout').style.display='block';
+    saveHistory(t,'humanize');
+  } catch(e){
+    alert('Humanization failed. Please try again.');
+  }
+  if(btn){ btn.disabled=false; }
+}
+
+async function geminiHumanize(text){
+  const lang = currentLang === 'ru' ? 'Russian' : currentLang === 'tr' ? 'Turkish' : currentLang === 'es' ? 'Spanish' : 'English';
+  const prompt = `You are an expert academic writer who rewrites AI-generated text to sound completely natural and human-written.
+
+Rewrite the following text so it:
+- Sounds like a real student or professional wrote it
+- Removes typical AI patterns (formal transitions, repetitive structure, overly perfect grammar)
+- Keeps the same meaning and language (${lang})
+- Uses natural contractions, varied sentence lengths, slight imperfections
+- Would pass GPTZero and Turnitin AI detection
+
+IMPORTANT: Return ONLY the rewritten text. No explanations, no "Here is the rewritten version:", just the text itself.
+
+Original text:
+"""
+${text.substring(0,3000)}
+"""`;
+
+  return await callGemini(prompt);
+}
+
+// ---- PLAGIARISM CHECK ----
+async function doCheck2(){
+  const t = document.getElementById('ptxt')?.value.trim();
+  if(!t){
+    document.getElementById('pout').style.display='block';
+    return;
+  }
+  const btn = document.querySelector('[onclick="doCheck2()"]');
+  if(btn){ btn.disabled=true; btn.textContent='Checking…'; }
+
+  try{
+    const prompt = `You are a plagiarism detection expert. Analyze this text and estimate its originality.
+
+Text:
+"""
+${t.substring(0,2000)}
+"""
+
+Respond ONLY with valid JSON (no markdown):
+{
+  "plagiarism_score": <integer 0-100, where 0 = fully original, 100 = fully plagiarized>,
+  "originality_score": <integer 0-100>,
+  "verdict": "<short verdict in ${currentLang === 'ru' ? 'Russian' : currentLang === 'es' ? 'Spanish' : currentLang === 'tr' ? 'Turkish' : 'English'}>",
+  "notes": "<brief observation about the text's originality>"
+}`;
+
+    const raw = await callGemini(prompt);
+    const clean = raw.replace(/```json|```/g,'').trim();
+    const json = JSON.parse(clean);
+
+    // Update plagiarism result UI
+    const pout = document.getElementById('pout');
+    pout.style.display='block';
+    const ps = document.getElementById('pscore');
+    if(ps) ps.textContent = json.originality_score+'%';
+    const pv = document.getElementById('pverdict');
+    if(pv) pv.textContent = json.verdict || '';
+    const pn = document.getElementById('pnotes');
+    if(pn) pn.textContent = json.notes || '';
+
+  } catch(e){
+    document.getElementById('pout').style.display='block';
+    console.error(e);
+  }
+  if(btn){ btn.disabled=false; btn.textContent='Check now →'; }
+}
+
+function copyOut(){navigator.clipboard.writeText(document.getElementById('outP').textContent);}
+
+
+// ============================================================
+// ONBOARDING
+// ============================================================
+const OB_STEPS = [
+  {
+    label: 'Step 1 of 3',
+    title: 'Paste your <em>text</em> to get started',
+    desc: 'Drop in any essay, thesis, or assignment. Vex.AI will instantly scan it for AI-generated patterns — no sign-up needed to try.',
+    bg: 'linear-gradient(135deg,#fff8f5,#fff3ee)',
+    visual: 'ob-v1',
+    progress: '33%'
+  },
+  {
+    label: 'Step 2 of 3',
+    title: 'Get your <em>AI score</em> in seconds',
+    desc: 'You\'ll see a precise score from 0–100%, a visual bar, and tags showing exactly which patterns flagged your text. Know before your professor does.',
+    bg: 'linear-gradient(135deg,#fffbeb,#fff8e1)',
+    visual: 'ob-v2',
+    progress: '66%'
+  },
+  {
+    label: 'Step 3 of 3',
+    title: 'One click to <em>humanize</em> it',
+    desc: 'Our humanizer rewrites flagged phrases into natural language — no more "Furthermore" or "It is important to note". Passes GPTZero and Turnitin.',
+    bg: 'linear-gradient(135deg,#f0fff8,#efffef)',
+    visual: 'ob-v3',
+    progress: '100%'
+  }
+];
+
+let obStep = 0;
+
+function initOnboarding(){
+  // Show only if never seen before (use sessionStorage so it shows once per session)
+  if(localStorage.getItem('vex_ob_done')) return;
+  setTimeout(()=>{
+    document.getElementById('onboarding').classList.add('open');
+  }, 800);
+}
+
+function obNext(){
+  if(obStep >= OB_STEPS.length - 1){
+    finishOnboarding();
+    return;
+  }
+  // Animate out
+  const card = document.getElementById('ob-card');
+  card.classList.remove('animating-in');
+  card.classList.add('animating-out');
+  setTimeout(()=>{
+    obStep++;
+    renderObStep(obStep);
+    card.classList.remove('animating-out');
+    card.classList.add('animating-in');
+  }, 280);
+}
+
+function renderObStep(i){
+  const s = OB_STEPS[i];
+  // Progress
+  document.getElementById('ob-progress').style.width = s.progress;
+  // Visual bg
+  document.getElementById('ob-visual').style.background = s.bg;
+  // Show correct visual
+  ['ob-v1','ob-v2','ob-v3'].forEach(id=>{
+    const el=document.getElementById(id);
+    if(!el) return;
+    if(id===s.visual){
+      el.style.display='flex';
+    } else {
+      el.style.display='none';
+    }
+  });
+  // Replay score bar animation on step 2
+  if(s.visual==='ob-v2'){
+    const bar=document.querySelector('.ob-score-bar');
+    if(bar){
+      bar.style.animation='none';
+      requestAnimationFrame(()=>{ setTimeout(()=>{ bar.style.animation='ob-progress 1.2s ease .3s both'; }, 20); });
+    }
+  }
+  // Text
+  document.getElementById('ob-label').textContent = s.label;
+  document.getElementById('ob-title').innerHTML = s.title;
+  document.getElementById('ob-desc').textContent = s.desc;
+  // Dots
+  document.querySelectorAll('.ob-dot').forEach((d,idx)=>d.classList.toggle('act',idx===i));
+  // Button
+  const btn = document.getElementById('ob-next-btn');
+  if(i === OB_STEPS.length - 1){
+    btn.innerHTML = 'Get started <svg viewBox="0 0 14 14" fill="none" style="width:14px;height:14px"><path d="M2 7h10M7 2l5 5-5 5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+    btn.classList.add('finish');
+  } else {
+    btn.innerHTML = 'Next <svg viewBox="0 0 14 14" fill="none" style="width:14px;height:14px"><path d="M2 7h10M7 2l5 5-5 5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+    btn.classList.remove('finish');
+  }
+}
+
+function finishOnboarding(){
+  const card = document.getElementById('ob-card');
+  card.classList.add('animating-out');
+  setTimeout(()=>{
+    document.getElementById('onboarding').classList.remove('open');
+    localStorage.setItem('vex_ob_done','1');
+    // Highlight textarea with a subtle pulse
+    const txt = document.getElementById('txt');
+    if(txt){txt.focus();txt.style.transition='box-shadow .4s';txt.style.boxShadow='0 0 0 3px rgba(255,77,28,.25)';setTimeout(()=>{txt.style.boxShadow='';},1800);}
+  }, 300);
+}
+
+function skipOnboarding(){
+  finishOnboarding();
+}
+
+// Init on page load
+window.addEventListener('DOMContentLoaded', ()=>{
+  // Small delay to let auth check complete first
+  setTimeout(()=>{
+    if(!currentUser) initOnboarding();
+  }, 900);
+});
+
+function toggleMobileMenu(){
+  const menu=document.getElementById('mobileMenu');
+  const burger=document.getElementById('burger');
+  const isOpen=menu.classList.contains('open');
+  menu.classList.toggle('open',!isOpen);
+  burger.classList.toggle('open',!isOpen);
+  // close lang dropdown if open
+  document.getElementById('langDropdown')?.classList.remove('open');
+}
+function closeMobileMenu(){
+  document.getElementById('mobileMenu').classList.remove('open');
+  document.getElementById('burger').classList.remove('open');
+}
+// Close mobile menu on outside click
+document.addEventListener('click',e=>{
+  const menu=document.getElementById('mobileMenu');
+  const burger=document.getElementById('burger');
+  if(menu&&burger&&!menu.contains(e.target)&&!burger.contains(e.target))closeMobileMenu();
+});
+// Highlight active nav in mobile menu
+const origShow=show;
+window.show=function(p){
+  origShow(p);
+  document.querySelectorAll('.mobile-menu a').forEach(a=>a.classList.remove('act'));
+  const ml=document.getElementById('ml-'+p);if(ml)ml.classList.add('act');
+  closeMobileMenu();
+};
+// updateMobileLang now handled in selectLang
+function updateMobileLang(l){}
+
+</script>
+</body>
+</html>
